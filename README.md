@@ -109,4 +109,9 @@ has had limited testing in large scale deployments. Before using in a production
 environment consider implementing unit tests and system tests.
 
 
+Logging
+-------
+
+Logging is done via the slf4j project. If you wish to collect log output please
+configure your relevant slf4j adapter.
 
