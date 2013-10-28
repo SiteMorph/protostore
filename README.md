@@ -104,5 +104,9 @@ on satisfying database constraints.
 
 Note that you must set the ID / URN on update.
 
+Note that this project was a coding exercise to avoid writing legacy SQL and
+has had limited testing in large scale deployments. Before using in a production
+environment consider implementing unit tests and system tests.
+
 
 
