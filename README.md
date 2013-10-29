@@ -31,7 +31,7 @@ Features
 * Write proto messages for legacy database tables without having to write sql.
 * Primary index support with auto increment and java UUID key support.
 * Secondary indexes on additional field values.
-* Ordered data [Urn field store only for now].
+* Ordered data by field value.
 
 Limitations
 -----------
