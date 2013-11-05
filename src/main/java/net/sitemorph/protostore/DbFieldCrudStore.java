@@ -372,6 +372,12 @@ public class DbFieldCrudStore<T extends Message> implements CrudStore<T> {
         statement.setString(index,
             ((Descriptors.EnumValueDescriptor)value).getName());
         break;
+      case FLOAT:
+        statement.setFloat(index, (Float)value);
+        break;
+      case DOUBLE:
+        statement.setDouble(index, (Double)value);
+        break;
       default:
         throw new CrudException("Index could not be generated for " +
             "unsupported type: " + field.getType().name());
