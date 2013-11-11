@@ -136,7 +136,7 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
       result = new InMemoryStore<M>();
     }
 
-    public Builder setPrototype(M.Builder prototype) {
+    public Builder<M> setPrototype(M.Builder prototype) {
       this.prototype = prototype;
       result.descriptor = prototype.getDescriptorForType();
       return this;
@@ -149,7 +149,7 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
      * @throws IllegalStateException if you have not set the prototype first
      * @throws IllegalArgumentException if you pass a name not found.
      */
-    public Builder setUrnField(String fieldName) {
+    public Builder<M> setUrnField(String fieldName) {
       if (null == prototype) {
         throw new IllegalStateException("Can't choose field based on name " +
             "because no prototype has been set");
@@ -165,7 +165,7 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
           " did not match any descriptor field names");
     }
 
-    public Builder addIndexField(String fieldName) {
+    public Builder<M> addIndexField(String fieldName) {
       if (null == prototype) {
         throw new IllegalStateException("Can't add index field as no " +
             "prototype has been set");
@@ -181,7 +181,7 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
           "did not match any field descriptor field names");
     }
 
-    public Builder setSortOrder(String fieldName, SortOrder direction) {
+    public Builder<M> setSortOrder(String fieldName, SortOrder direction) {
       if (null == prototype) {
         throw new IllegalStateException("Can't set sort order field as no " +
             "prototype has been set");
