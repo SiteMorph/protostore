@@ -87,7 +87,7 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
     // iterate over the index fields
     for (FieldDescriptor field : indexes) {
       if (builder.hasField(field)) {
-        return new FilteringDataIterator(data, field,
+        return new FilteringDataIterator<T>(data, field,
             builder.getField(field));
       }
     }
@@ -207,7 +207,7 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
           "did not match any field descriptor field names.");
     }
 
-    public InMemoryStore<M> build() {
+    public CrudStore<M> build() {
       return result;
     }
   }
