@@ -207,5 +207,8 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
           "did not match any field descriptor field names.");
     }
 
+    public InMemoryStore<M> build() {
+      return result;
+    }
   }
 }
