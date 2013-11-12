@@ -8,9 +8,9 @@ import com.google.protobuf.Message;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
 
 /**
- * A really simple in memory store that has some particular semantics.
  * This store is simply intended to be used as an in memory cache or
  * buffer rather than a persisted store. This means that you must set all
  * required fields for the builder before it is passed.
@@ -21,7 +21,11 @@ import java.util.List;
  * The store supports filtering by urn or index field. Note that these
  * operations are O(N) as they iterate over the full data set. The store
  * supports a single order by field as well as named secondary indexes. Results
- * are stored in the sort order specified so will
+ * are stored in the sort order specified so will be returned in that order
+ * whenever iterated over.
+ *
+ * Note that it is assumed that the urn field is a UUID string and will be set
+ * as such when create is called, checking for uniqueness.
  *
  * @author damien@sitemorph.net
  */
@@ -38,6 +42,18 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
 
   @Override
   public T create(T.Builder builder) throws CrudException {
+
+    // find a urn for the new object
+    UUID urn = UUID.randomUUID();
+
+    CrudIterator<T> priors = new FilteringDataIterator<T>(data, urnField,
+        urn);
+    while (priors.hasNext()) {
+      urn = UUID.randomUUID();
+      priors = new FilteringDataIterator<T>(data, urnField, urn);
+    }
+    builder.setField(urnField, urn.toString());
+
     T newValue = (T) builder.build();
     int insertAt;
     if (null != sortField) {
