@@ -37,7 +37,16 @@ public class DbFieldCrudStore<T extends Message> implements CrudStore<T> {
   private String autoIdColumn;
   private Message.Builder builderProtype;
   private FieldDescriptor idDescriptor;
+  private ColumnType idType;
   private Map<FieldDescriptor, PreparedStatement> readIndexes;
+
+  /**
+   * Enum used for auto ID generation type casting.
+   */
+  private enum ColumnType {
+    INTEGER,
+    LONG
+  }
 
   @Override
   public void close() throws CrudException {
@@ -77,7 +86,12 @@ public class DbFieldCrudStore<T extends Message> implements CrudStore<T> {
       create.executeUpdate();
       ResultSet keys = create.getGeneratedKeys();
       keys.next();
-      builder.setField(idDescriptor, keys.getInt(1));
+      switch (idType) {
+        case INTEGER: builder.setField(idDescriptor, keys.getInt(1));
+          break;
+        case LONG: builder.setField(idDescriptor, keys.getLong(1));
+      }
+
       keys.close();
       return (T) builder.build();
     } catch (SQLException e) {
@@ -104,8 +118,7 @@ public class DbFieldCrudStore<T extends Message> implements CrudStore<T> {
 
       if (builder.hasField(idDescriptor)) {
         Object value = builder.getField(idDescriptor);
-        Integer idValue = (Integer) value;
-        read.setInt(1, idValue);
+        setStatementValue(read, 1, idDescriptor, value);
         return new DbFieldIterator<T>(builder, read.executeQuery());
       }
       if (null == readIndexes) {
@@ -147,7 +160,9 @@ public class DbFieldCrudStore<T extends Message> implements CrudStore<T> {
         Object value = builder.getField(field);
         setStatementValue(update, offset++, field, value);
       }
-      update.setInt(offset, (Integer)builder.getField(idDescriptor));
+      // update has the last field as the id 'always' as it is the where
+      setStatementValue(update, offset, idDescriptor,
+          builder.getField(idDescriptor));
       update.executeUpdate();
       return (T) builder.build();
     } catch (SQLException e) {
@@ -158,7 +173,8 @@ public class DbFieldCrudStore<T extends Message> implements CrudStore<T> {
   @Override
   public void delete(T message) throws CrudException {
     try {
-      delete.setInt(1, (Integer)message.getField(idDescriptor));
+      setStatementValue(delete, 1, idDescriptor,
+          message.getField(idDescriptor));
       delete.executeUpdate();
     } catch (SQLException e) {
       throw new CrudException("Error deleting from store", e);
@@ -187,6 +203,24 @@ public class DbFieldCrudStore<T extends Message> implements CrudStore<T> {
       for (FieldDescriptor field : fields) {
         if (field.getName().equals(result.autoIdColumn)) {
           result.idDescriptor = field;
+          switch (field.getType()) {
+            case INT64 :
+            case UINT64 :
+            case FIXED64 :
+            case SFIXED64 :
+            case SINT64 :
+              result.idType = ColumnType.LONG;
+              break;
+            case INT32 :
+            case FIXED32 :
+            case UINT32 :
+            case SFIXED32 :
+            case SINT32 :
+              result.idType = ColumnType.INTEGER;
+
+            default: // DOUBLE, FLOAT,BOOL, STRING, GROUP, MESSAGE, BYTES, ENUM,
+              // these are not auto increment types so this is an error state
+          }
         }
       }
       if (null == result.idDescriptor) {

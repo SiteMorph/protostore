@@ -109,6 +109,12 @@ has had limited testing in large scale deployments. Before using in a production
 environment consider implementing unit tests and system tests.
 
 
+Change Log
+----------
+2.9.0
+* Added support for long auto incremented keys to the field crud store. This 
+  should work transparently using the message id field polymorphism.
+
 Logging
 -------
 

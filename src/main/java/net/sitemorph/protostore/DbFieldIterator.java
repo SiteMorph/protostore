@@ -112,7 +112,7 @@ public class DbFieldIterator<T extends Message> implements CrudIterator<T> {
           //case BYTES:
           //case MESSAGE:
           default:
-            throw new CrudException("Unsupported Proto Type: " +
+            throw new CrudException("Unsupported proto field type: " +
                 field.getType().name());
         }
         if (resultSet.wasNull() || null == value) {
