@@ -123,6 +123,29 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
       if (old.getField(urnField).equals(updateUrn)) {
         T result = (T) builder.build();
         data.set(i, result);
+        // sort the data in case the update order changed
+        Collections.sort(data, new Comparator<T>() {
+          @Override
+          public int compare(T left, T right) {
+            Object leftValue = left.getField(sortField);
+            if (!(leftValue instanceof Comparable)) {
+              throw new IllegalArgumentException("Underlying type is not " +
+                  "comparable. Please check your configuration. for sort field " +
+                  sortField.getName());
+            }
+            Object rightValue = right.getField(sortField);
+            if (!(rightValue instanceof Comparable)) {
+              throw new IllegalArgumentException("Underlying type is not " +
+                  "comparable. please check your configuration for sort field " +
+                  sortField.getName());
+            }
+            if (SortOrder.ASCENDING == direction) {
+              return ((Comparable) leftValue).compareTo(rightValue);
+            } else {
+              return ((Comparable) rightValue).compareTo(leftValue);
+            }
+          }
+        });
         return result;
       }
     }
