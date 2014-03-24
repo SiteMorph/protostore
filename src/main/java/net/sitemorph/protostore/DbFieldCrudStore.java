@@ -362,7 +362,7 @@ public class DbFieldCrudStore<T extends Message> implements CrudStore<T> {
           .append(sortField.getName());
     }
     if (null != order) {
-      read.append(" ");;
+      read.append(" ");
       switch (order) {
         case ASCENDING : read.append("ASC");
           break;
