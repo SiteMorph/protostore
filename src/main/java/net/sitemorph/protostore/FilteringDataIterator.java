@@ -41,7 +41,7 @@ public class FilteringDataIterator<T extends Message>
       return null;
     }
     found = false;
-    return data.get(index);
+    return data.get(index++);
   }
 
   @Override
@@ -49,6 +49,7 @@ public class FilteringDataIterator<T extends Message>
     if (found && index < data.size()) {
       return true;
     }
+    found = false;
     while (!found && index < data.size()) {
       if (data.get(index).getField(matchField).equals(fieldValue)) {
         found = true;
