@@ -1,6 +1,7 @@
 package net.sitemorph.protostore;
 
 import com.google.protobuf.Message;
+import com.google.protobuf.Message.Builder;
 
 /**
  * A basic store supporting create read update and delete operations for a proto

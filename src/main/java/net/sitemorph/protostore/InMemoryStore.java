@@ -97,18 +97,18 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
   public CrudIterator<T> read(T.Builder builder) throws CrudException {
     if (builder.hasField(urnField)) {
       // read based on the urn field
-      return new FilteringDataIterator<T>(data, urnField,
+      return new FilteringDataIterator<T>(Lists.newArrayList(data), urnField,
           builder.getField(urnField));
     }
     // iterate over the index fields
     for (FieldDescriptor field : indexes) {
       if (builder.hasField(field)) {
-        return new FilteringDataIterator<T>(data, field,
+        return new FilteringDataIterator<T>(Lists.newArrayList(data), field,
             builder.getField(field));
       }
     }
     // read all data
-    return new AllDataIterator<T>(data);
+    return new AllDataIterator<T>(Lists.newArrayList(data));
   }
 
   @Override
@@ -247,6 +247,9 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
     }
 
     public CrudStore<M> build() {
+      if (null == result.sortField) {
+        result.sortField = result.urnField;
+      }
       return result;
     }
   }
