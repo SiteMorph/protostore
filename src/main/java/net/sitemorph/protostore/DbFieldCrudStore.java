@@ -39,6 +39,7 @@ public class DbFieldCrudStore<T extends Message> implements CrudStore<T> {
   private FieldDescriptor idDescriptor;
   private ColumnType idType;
   private Map<FieldDescriptor, PreparedStatement> readIndexes;
+  private FieldDescriptor vectorField;
 
   /**
    * Enum used for auto ID generation type casting.
@@ -67,10 +68,13 @@ public class DbFieldCrudStore<T extends Message> implements CrudStore<T> {
 
 
   @Override
-  public T create(T.Builder builder) throws CrudException {
+  public T create(Message.Builder builder) throws CrudException {
     try {
       Descriptor descriptor = builder.getDescriptorForType();
       List<FieldDescriptor> fields = descriptor.getFields();
+      if (null != vectorField) {
+        InMemoryStore.setInitialVector(builder, vectorField);
+      }
       int offset = 1;
       for (FieldDescriptor field : fields) {
         if (field.equals(idDescriptor)) {
@@ -112,7 +116,7 @@ public class DbFieldCrudStore<T extends Message> implements CrudStore<T> {
    * @throws CrudException
    */
   @Override
-  public CrudIterator<T> read(T.Builder builder) throws CrudException {
+  public CrudIterator<T> read(Message.Builder builder) throws CrudException {
 
     try {
 
@@ -144,7 +148,27 @@ public class DbFieldCrudStore<T extends Message> implements CrudStore<T> {
   }
 
   @Override
-  public T update(T.Builder builder) throws CrudException {
+  public T update(Message.Builder builder) throws CrudException {
+    if (!builder.hasField(idDescriptor)) {
+      throw new CrudException("Can't update message due to missing ID");
+    }
+    if (null != vectorField) {
+      if (!builder.hasField(vectorField)) {
+        throw new MessageVectorException("Update is missing clock vector");
+      }
+      CrudIterator<T> priors = read(builder);
+      if (!priors.hasNext()) {
+        priors.close();
+        throw new CrudException("Update attempted for unknown message: " +
+            builder.getField(idDescriptor));
+      }
+      T prior = priors.next();
+      priors.close();
+      if (!prior.getField(vectorField).equals(builder.getField(vectorField))) {
+        throw new MessageVectorException("Update vector is out of date");
+      }
+      InMemoryStore.updateVector(builder, vectorField);
+    }
     try {
       Descriptor descriptor = builder.getDescriptorForType();
       List<FieldDescriptor> fields = descriptor.getFields();
@@ -172,6 +196,25 @@ public class DbFieldCrudStore<T extends Message> implements CrudStore<T> {
 
   @Override
   public void delete(T message) throws CrudException {
+    if(!message.hasField(idDescriptor)) {
+      throw new CrudException("Can't delete message due to missing urn");
+    }
+    if (null != vectorField) {
+      if (!message.hasField(vectorField)) {
+        throw new MessageVectorException("Delete is missing clock vector");
+      }
+      CrudIterator<T> priors = read(message.toBuilder());
+      if (!priors.hasNext()) {
+        priors.close();
+        throw new CrudException("Delete attempted for unknown message: " +
+            message.getField(idDescriptor));
+      }
+      T prior = priors.next();
+      priors.close();
+      if (!prior.getField(vectorField).equals(message.getField(vectorField))) {
+        throw new MessageVectorException("Delete vector is out of date");
+      }
+    }
     try {
       setStatementValue(delete, 1, idDescriptor,
           message.getField(idDescriptor));
@@ -320,7 +363,23 @@ public class DbFieldCrudStore<T extends Message> implements CrudStore<T> {
       return this;
     }
 
-    public Builder<F> setBuilderPrototype(F.Builder builderPrototype) {
+    public Builder<F> setVectorField(String fieldName) {
+      if (null == result.builderProtype) {
+        throw new IllegalStateException("Can't set vector field as no " +
+            "prototype has been set");
+      }
+      Descriptor descriptor = result.builderProtype.getDescriptorForType();
+      for (FieldDescriptor field : descriptor.getFields()) {
+        if (field.getName().equals(fieldName)) {
+          result.vectorField = field;
+          return this;
+        }
+      }
+      throw new IllegalArgumentException("Can't find teh requested vector " +
+          "clock field: " + fieldName);
+    }
+
+    public Builder<F> setBuilderPrototype(Message.Builder builderPrototype) {
       result.builderProtype = builderPrototype;
       return this;
     }

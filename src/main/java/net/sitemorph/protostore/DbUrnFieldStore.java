@@ -1,5 +1,7 @@
 package net.sitemorph.protostore;
 
+import static net.sitemorph.protostore.DbFieldCrudStore.setStatementValue;
+
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.protobuf.Descriptors.Descriptor;
@@ -14,14 +16,25 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import static net.sitemorph.protostore.DbFieldCrudStore.setStatementValue;
-
 /**
  * URN keyed data store using columnar storage like the field iterator but uses
  * internal UUID. Also supports sort order.
  *
  * The goal of this class is to allow UUID based crud and avoid db locks with
  * multiple front end.
+ *
+ * TODO(dka) Implement update based on both vector and ID to prevent theoretical
+ * race condition that could occur between 'read' of an updated value vector and
+ * a concurrent read before the immediately proceeding write. Note though that
+ * this second read would then error when updating as it would be out of date.
+ * This can be fixed by using the update counter or a transaction which acquires
+ * a write lock for the table.
+ *
+ * TODO(dka) Implement different vector start clocks as a best effort way of
+ * avoiding the situation where there is a create, delete create with the
+ * same random uuid and both have the same vector clock but are different
+ * messages. This is only a remote possibility assuming that random UUID
+ * reuse is low.
  *
  * @author damien@sitemorph.net
  *
@@ -33,11 +46,12 @@ public class DbUrnFieldStore<T extends Message> implements CrudStore<T> {
   private Connection connection;
   private PreparedStatement create, readAll, update, delete, readUrn;
   private String tableName;
-  private T.Builder prototype;
+  private Message.Builder prototype;
   private FieldDescriptor urnField;
   private Map<FieldDescriptor, PreparedStatement> readIndexes;
   private SortOrder sortDirection;
   private FieldDescriptor sortField;
+  private FieldDescriptor vectorField;
 
   private DbUrnFieldStore() {
     readIndexes = Maps.newHashMap();
@@ -51,7 +65,7 @@ public class DbUrnFieldStore<T extends Message> implements CrudStore<T> {
    * @throws CrudException
    */
   @Override
-  public T create(T.Builder builder) throws CrudException {
+  public T create(Message.Builder builder) throws CrudException {
     try {
       // set the uuid
       UUID uid = UUID.randomUUID();
@@ -65,6 +79,9 @@ public class DbUrnFieldStore<T extends Message> implements CrudStore<T> {
       }
       prior.close();
       builder.setField(urnField, uid.toString());
+      if (null != vectorField) {
+        InMemoryStore.setInitialVector(builder, vectorField);
+      }
 
       Descriptor descriptor = prototype.getDescriptorForType();
       List<FieldDescriptor> fields = descriptor.getFields();
@@ -91,7 +108,7 @@ public class DbUrnFieldStore<T extends Message> implements CrudStore<T> {
    * @throws CrudException
    */
   @Override
-  public CrudIterator<T> read(T.Builder builder) throws CrudException {
+  public CrudIterator<T> read(Message.Builder builder) throws CrudException {
     try {
       if (builder.hasField(urnField)) {
         readUrn.setString(1, builder.getField(urnField).toString());
@@ -116,7 +133,28 @@ public class DbUrnFieldStore<T extends Message> implements CrudStore<T> {
   }
 
   @Override
-  public T update(T.Builder builder) throws CrudException {
+  public T update(Message.Builder builder) throws CrudException {
+    if(!builder.hasField(urnField)) {
+      throw new CrudException("Can't update message due to missing urn");
+    }
+    if (null != vectorField) {
+      if (!builder.hasField(vectorField)) {
+        throw new MessageVectorException("Update is missing clock vector");
+      }
+      CrudIterator<T> priors = read(builder);
+      if (!priors.hasNext()) {
+        priors.close();
+        throw new CrudException("Update attempted for unknown message: " +
+            builder.getField(urnField));
+      }
+      T prior = priors.next();
+      priors.close();
+      if (!prior.getField(vectorField).equals(builder.getField(vectorField))) {
+       throw new MessageVectorException("Update vector is out of date");
+      }
+      InMemoryStore.updateVector(builder, vectorField);
+    }
+    // write the update
     try {
       Descriptor descriptor = builder.getDescriptorForType();
       List<FieldDescriptor> fields = descriptor.getFields();
@@ -139,6 +177,25 @@ public class DbUrnFieldStore<T extends Message> implements CrudStore<T> {
 
   @Override
   public void delete(T message) throws CrudException {
+    if(!message.hasField(urnField)) {
+      throw new CrudException("Can't update message due to missing urn");
+    }
+    if (null != vectorField) {
+      if (!message.hasField(vectorField)) {
+        throw new MessageVectorException("Delete is missing clock vector");
+      }
+      CrudIterator<T> priors = read(message.toBuilder());
+      if (!priors.hasNext()) {
+        priors.close();
+        throw new CrudException("Delete attempted for unknown message: " +
+            message.getField(urnField));
+      }
+      T prior = priors.next();
+      priors.close();
+      if (!prior.getField(vectorField).equals(message.getField(vectorField))) {
+        throw new MessageVectorException("Delete vector is out of date");
+      }
+    }
     try {
       delete.setString(1, message.getField(urnField).toString());
       delete.executeUpdate();
@@ -287,7 +344,18 @@ public class DbUrnFieldStore<T extends Message> implements CrudStore<T> {
       return this;
     }
 
-    public Builder<F> setPrototype(F.Builder prototype) {
+    public Builder<F> setVectorField(String fieldName) throws CrudException {
+      Descriptor descriptor = result.prototype.getDescriptorForType();
+      for (FieldDescriptor field : descriptor.getFields()) {
+        if (field.getName().equals(fieldName)) {
+          result.vectorField = field;
+          return this;
+        }
+      }
+      throw new CrudException("Error locating vector field: " + fieldName);
+    }
+
+    public Builder<F> setPrototype(Message.Builder prototype) {
       result.prototype = prototype;
       return this;
     }

@@ -32,6 +32,8 @@ Features
 * Primary index support with auto increment and java UUID key support.
 * Secondary indexes on additional field values.
 * Ordered data by field value.
+* Message clock vector support for create / update / delete to detect race
+  conditions.
 
 Limitations
 -----------
@@ -40,7 +42,13 @@ Limitations
 * Only supports protobuf 2.4.1 style syntax.
 * Only supports iteration of values, no aggregation functions.
 * No roll back on build error.
-
+* Specific drivers weren't adapted to use a vector adaptor to allow different
+  drivers to use internal features for locking as there is still no general
+  distributed locking solution assumed.
+* The clock vector solution doesn't include create version as would be included
+  in protocols like chubby to avoid accidental allocation of locks as it is
+  currently assumed that the allocation of UUID to a random value will be
+  sufficient to avoid duplication of implied lock ownership.
 
 Usage
 -----

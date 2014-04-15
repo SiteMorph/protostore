@@ -3,10 +3,12 @@ package net.sitemorph.protostore;
 import com.google.common.collect.Lists;
 import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
+import com.google.protobuf.Descriptors.FieldDescriptor.Type;
 import com.google.protobuf.Message;
 
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
 
@@ -27,21 +29,32 @@ import java.util.UUID;
  * Note that it is assumed that the urn field is a UUID string and will be set
  * as such when create is called, checking for uniqueness.
  *
+ * If set up when creating the store support for vector clocks is also provided.
+ * This is achieved by the use of 'reads' having a hinted vector clock field
+ * which must store a signed long value which is used to signal updates to the
+ * store. Vector values should not be set but will be required on update. This
+ * means that a read / update can be checked to ensure that writes to a message
+ * store are reflective of updates made. If two readers read concurrently one
+ * will succeed in the write then the other, the second will throw an update
+ * vector error due to clock skew.
+ *
  * @author damien@sitemorph.net
  */
 public class InMemoryStore<T extends Message> implements CrudStore<T> {
 
+  public  static final long INITIAL_VECTOR = 0;
   private FieldDescriptor urnField;
   private List<FieldDescriptor> indexes = Lists.newArrayList();
   private List<T> data = Lists.newArrayList();
   private Descriptor descriptor;
   private FieldDescriptor sortField = null;
   private SortOrder direction = SortOrder.ASCENDING;
+  private FieldDescriptor vectorField = null;
 
   private InMemoryStore() {}
 
   @Override
-  public T create(T.Builder builder) throws CrudException {
+  public T create(Message.Builder builder) throws CrudException {
 
     // find a urn for the new object
     UUID urn = UUID.randomUUID();
@@ -79,6 +92,9 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
           }
         }
       });
+      if (null != vectorField) {
+        setInitialVector(builder, vectorField);
+      }
       if (0 > insertAt) {
         // if not exactly found then will be inserted.
         insertAt = -(insertAt) - 1;
@@ -94,7 +110,7 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
   }
 
   @Override
-  public CrudIterator<T> read(T.Builder builder) throws CrudException {
+  public CrudIterator<T> read(Message.Builder builder) throws CrudException {
     if (builder.hasField(urnField)) {
       // read based on the urn field
       return new FilteringDataIterator<T>(Lists.newArrayList(data), urnField,
@@ -112,7 +128,7 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
   }
 
   @Override
-  public T update(T.Builder builder) throws CrudException {
+  public T update(Message.Builder builder) throws CrudException {
     if (!builder.hasField(urnField)) {
       throw new IllegalArgumentException("Update provided does not include " +
           "a value for the urn field");
@@ -120,7 +136,18 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
     Object updateUrn = builder.getField(urnField);
     for (int i = 0; i < data.size(); i++) {
       T old = data.get(i);
+      // if this is our message to update
       if (old.getField(urnField).equals(updateUrn)) {
+        if (null != vectorField) {
+          if (!builder.hasField(vectorField)) {
+            throw new MessageVectorException("Update is missing clock vector");
+          }
+          if (!builder.getField(vectorField).equals(old.getField(vectorField))) {
+            throw new MessageVectorException("Update vector is out of date");
+          }
+          updateVector(builder, vectorField);
+        }
+
         T result = (T) builder.build();
         data.set(i, result);
         // sort the data in case the update order changed
@@ -156,7 +183,20 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
   @Override
   public void delete(T message) throws CrudException {
     // TODO 20131111 Implement based on urn column
-    data.remove(message);
+    for (int i = 0; i < data.size(); i++) {
+      T old = data.get(i);
+      if (old.getField(urnField).equals(message.getField(urnField))) {
+        if (null != vectorField) {
+          if (!message.getField(vectorField).equals(old.getField(vectorField))) {
+            throw new MessageVectorException("Update failed due to vector " +
+                "mismatch");
+          }
+        }
+        data.remove(i);
+        return;
+      }
+    }
+    throw new CrudException("Failed to delete missing message");
   }
 
   @Override
@@ -166,16 +206,44 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
 
   }
 
+  static void updateVector(Message.Builder builder,
+      FieldDescriptor vectorField) {
+    Object current = builder.getField(vectorField);
+    if (null == current) {
+      throw new RuntimeException("Message clock vector data missing");
+    }
+    if (!(current instanceof Long)) {
+      throw new RuntimeException("Message clock vector data type error");
+    }
+    Long value = (Long)current;
+    if (value == Long.MAX_VALUE) {
+      value = INITIAL_VECTOR;
+    } else {
+      value += 1L;
+    }
+    builder.setField(vectorField, value);
+  }
+
+  static void setInitialVector(Message.Builder builder,
+      FieldDescriptor vectorField) {
+    builder.setField(vectorField, INITIAL_VECTOR);
+  }
+
   public static class  Builder<M extends Message> {
 
     private InMemoryStore<M> result;
-    private M.Builder prototype;
+    private Message.Builder prototype;
+    private static final EnumSet<Type> INTEGRALS = EnumSet.of(Type.INT64,
+        Type.UINT64,
+        Type.FIXED64,
+        Type.SFIXED64,
+        Type.SINT64);
 
     public Builder() {
       result = new InMemoryStore<M>();
     }
 
-    public Builder<M> setPrototype(M.Builder prototype) {
+    public Builder<M> setPrototype(Message.Builder prototype) {
       this.prototype = prototype;
       result.descriptor = prototype.getDescriptorForType();
       return this;
@@ -218,6 +286,26 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
       }
       throw new IllegalArgumentException("Supplied field name " + fieldName +
           "did not match any field descriptor field names");
+    }
+
+    public Builder<M> setVectorField(String fieldName) {
+      if (null == prototype) {
+        throw new IllegalStateException("Can't set vector field as no " +
+            "prototype has been set");
+      }
+      Descriptor descriptor = prototype.getDescriptorForType();
+      for (FieldDescriptor field : descriptor.getFields()) {
+        if (field.getName().equals(fieldName)) {
+          if (INTEGRALS.contains(field.getType())) {
+            throw new IllegalArgumentException("Can't use a vector clock " +
+                "on a non long field");
+          }
+          result.vectorField = field;
+          return this;
+        }
+      }
+      throw new IllegalArgumentException("Can't find the requested vector " +
+          "clock field: " + fieldName);
     }
 
     public Builder<M> setSortOrder(String fieldName, SortOrder direction) {
