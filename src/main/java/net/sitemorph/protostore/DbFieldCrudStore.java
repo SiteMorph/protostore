@@ -375,7 +375,7 @@ public class DbFieldCrudStore<T extends Message> implements CrudStore<T> {
           return this;
         }
       }
-      throw new IllegalArgumentException("Can't find teh requested vector " +
+      throw new IllegalArgumentException("Can't find the requested vector " +
           "clock field: " + fieldName);
     }
 

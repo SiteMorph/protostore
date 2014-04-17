@@ -66,6 +66,9 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
       priors = new FilteringDataIterator<T>(data, urnField, urn);
     }
     builder.setField(urnField, urn.toString());
+    if (null != vectorField) {
+      setInitialVector(builder, vectorField);
+    }
 
     T newValue = (T) builder.build();
     int insertAt;
@@ -92,9 +95,7 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
           }
         }
       });
-      if (null != vectorField) {
-        setInitialVector(builder, vectorField);
-      }
+
       if (0 > insertAt) {
         // if not exactly found then will be inserted.
         insertAt = -(insertAt) - 1;
