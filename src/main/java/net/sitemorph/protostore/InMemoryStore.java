@@ -233,7 +233,8 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
 
     private InMemoryStore<M> result;
     private Message.Builder prototype;
-    private static final EnumSet<Type> INTEGRALS = EnumSet.of(Type.INT64,
+    private static final EnumSet<Type> INTEGRALS = EnumSet.of(
+        Type.INT64,
         Type.UINT64,
         Type.FIXED64,
         Type.SFIXED64,
@@ -296,7 +297,7 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
       Descriptor descriptor = prototype.getDescriptorForType();
       for (FieldDescriptor field : descriptor.getFields()) {
         if (field.getName().equals(fieldName)) {
-          if (INTEGRALS.contains(field.getType())) {
+          if (!INTEGRALS.contains(field.getType())) {
             throw new IllegalArgumentException("Can't use a vector clock " +
                 "on a non long field");
           }
