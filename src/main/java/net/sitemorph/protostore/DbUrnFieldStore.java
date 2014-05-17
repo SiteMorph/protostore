@@ -233,6 +233,9 @@ public class DbUrnFieldStore<T extends Message> implements CrudStore<T> {
       if (null == result.urnField) {
         throw new CrudException("Required urn field not set");
       }
+      if (null == result.connection) {
+        throw new CrudException("Connection null. Please provide a connector");
+      }
 
       Descriptor descriptor = result.prototype.getDescriptorForType();
       List<FieldDescriptor> fields = descriptor.getFields();
