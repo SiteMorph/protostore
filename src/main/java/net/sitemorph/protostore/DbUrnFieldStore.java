@@ -230,6 +230,12 @@ public class DbUrnFieldStore<T extends Message> implements CrudStore<T> {
     }
 
     public DbUrnFieldStore<F> build() throws CrudException {
+      if (null == result.prototype) {
+        throw new CrudException("Protobuf prototype required but not set.");
+      }
+      if (null == result.tableName) {
+        throw new CrudException("Table name required but not set");
+      }
       if (null == result.urnField) {
         throw new CrudException("Required urn field not set");
       }
