@@ -22,6 +22,8 @@ import java.util.Set;
  * Implementation of a store based on database column fields. This assumes that
  * the table uses an auto ID based keying system for generating IDs on insert.
  *
+ * TODO(dka) Impelement statement update test and set for update and delete
+ *
  * @author damien@sitemorph.net
  */
 public class DbFieldCrudStore<T extends Message> implements CrudStore<T> {
