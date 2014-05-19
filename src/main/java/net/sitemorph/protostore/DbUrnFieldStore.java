@@ -1,7 +1,5 @@
 package net.sitemorph.protostore;
 
-import static net.sitemorph.protostore.DbFieldCrudStore.setStatementValue;
-
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.protobuf.Descriptors.Descriptor;
@@ -15,6 +13,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+
+import static net.sitemorph.protostore.DbFieldCrudStore.setStatementValue;
 
 /**
  * URN keyed data store using columnar storage like the field iterator but uses
@@ -137,38 +137,38 @@ public class DbUrnFieldStore<T extends Message> implements CrudStore<T> {
     if(!builder.hasField(urnField)) {
       throw new CrudException("Can't update message due to missing urn");
     }
-    if (null != vectorField) {
-      if (!builder.hasField(vectorField)) {
-        throw new MessageVectorException("Update is missing clock vector");
-      }
-      CrudIterator<T> priors = read(builder);
-      if (!priors.hasNext()) {
-        priors.close();
-        throw new CrudException("Update attempted for unknown message: " +
-            builder.getField(urnField));
-      }
-      T prior = priors.next();
-      priors.close();
-      if (!prior.getField(vectorField).equals(builder.getField(vectorField))) {
-       throw new MessageVectorException("Update vector is out of date");
-      }
-      InMemoryStore.updateVector(builder, vectorField);
-    }
+
     // write the update
     try {
       Descriptor descriptor = builder.getDescriptorForType();
       List<FieldDescriptor> fields = descriptor.getFields();
       int offset = 1;
+      long vector = -1;
       for (FieldDescriptor field : fields) {
         if (field.equals(urnField)) {
           // skip the urn field as it is set in the where
           continue;
         }
+        if (null != vectorField && field.equals(vectorField)) {
+          // update the vector
+          vector = (Long) builder.getField(vectorField);
+          InMemoryStore.updateVector(builder, vectorField);
+        }
         Object value = builder.hasField(field)? builder.getField(field) : null;
         setStatementValue(update, offset++, field, value);
       }
-      update.setString(offset,  builder.getField(urnField).toString());
-      update.executeUpdate();
+      update.setString(offset++,  builder.getField(urnField).toString());
+
+      if (null != vectorField) {
+        update.setLong(offset, vector);
+      }
+      int updated = update.executeUpdate();
+      // test and set using update where old value to new value
+      if (1 != updated) {
+        throw new MessageVectorException(
+            builder.getDescriptorForType().getName() + " : " +
+            builder.getField(urnField) + " not updated to to vector mismatch");
+      }
       return (T) builder.build();
     } catch (SQLException e) {
       throw new CrudException("Error updating urn crud value", e);
@@ -180,25 +180,17 @@ public class DbUrnFieldStore<T extends Message> implements CrudStore<T> {
     if(!message.hasField(urnField)) {
       throw new CrudException("Can't update message due to missing urn");
     }
-    if (null != vectorField) {
-      if (!message.hasField(vectorField)) {
-        throw new MessageVectorException("Delete is missing clock vector");
-      }
-      CrudIterator<T> priors = read(message.toBuilder());
-      if (!priors.hasNext()) {
-        priors.close();
-        throw new CrudException("Delete attempted for unknown message: " +
-            message.getField(urnField));
-      }
-      T prior = priors.next();
-      priors.close();
-      if (!prior.getField(vectorField).equals(message.getField(vectorField))) {
-        throw new MessageVectorException("Delete vector is out of date");
-      }
-    }
     try {
       delete.setString(1, message.getField(urnField).toString());
-      delete.executeUpdate();
+      if (null != vectorField) {
+        Long vector = (Long)message.getField(vectorField);
+        delete.setLong(2, vector);
+      }
+      int updated = delete.executeUpdate();
+      if (1 != updated) {
+        throw new MessageVectorException("Delete failed due to missing or " +
+            "vector clock mismatch");
+      }
     } catch (SQLException e) {
       throw new CrudException("Error deleting urn crud value", e);
     }
@@ -306,6 +298,11 @@ public class DbUrnFieldStore<T extends Message> implements CrudStore<T> {
         update.append(" WHERE ")
             .append(result.urnField.getName())
             .append(" = ?");
+        if (null != result.vectorField) {
+          update.append(" AND ")
+              .append(result.vectorField.getName())
+              .append(" = ?");
+        }
         result.update = result.connection.prepareStatement(update.toString());
       } catch (SQLException e) {
         throw new CrudException("Error creating update for urn store", e);
@@ -319,6 +316,11 @@ public class DbUrnFieldStore<T extends Message> implements CrudStore<T> {
             .append(" WHERE ")
             .append(result.urnField.getName())
             .append(" = ?");
+        if (null != result.vectorField) {
+          delete.append(" AND ")
+              .append(result.vectorField.getName())
+              .append(" = ?");
+        }
         result.delete = result.connection.prepareStatement(delete.toString());
       } catch (SQLException e) {
         throw new CrudException("Error creating delete for urn store", e);
