@@ -40,6 +40,9 @@ import java.util.UUID;
  *
  * TODO create an example on the github documentations
  * TODO consider making the name provider a factory
+ *
+ * TODO modify to use single statement vector update. Should not be used for
+ * relaxed locking scenarios until resolved.
  */
 public class DbUrnFieldStore<T extends Message> implements CrudStore<T> {
 
@@ -168,7 +171,10 @@ public class DbUrnFieldStore<T extends Message> implements CrudStore<T> {
         setStatementValue(update, offset++, field, value);
       }
       update.setString(offset,  builder.getField(urnField).toString());
-      update.executeUpdate();
+      int updated = update.executeUpdate();
+      if (0 == updated) {
+        throw new MessageNotFound("Could not update message. Not found");
+      }
       return (T) builder.build();
     } catch (SQLException e) {
       throw new CrudException("Error updating urn crud value", e);
@@ -198,7 +204,10 @@ public class DbUrnFieldStore<T extends Message> implements CrudStore<T> {
     }
     try {
       delete.setString(1, message.getField(urnField).toString());
-      delete.executeUpdate();
+      int deleted = delete.executeUpdate();
+      if (0 == deleted) {
+        throw new MessageNotFound("Could not delete message. Not found.");
+      }
     } catch (SQLException e) {
       throw new CrudException("Error deleting urn crud value", e);
     }
