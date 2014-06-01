@@ -40,6 +40,9 @@ import static net.sitemorph.protostore.DbFieldCrudStore.setStatementValue;
  *
  * TODO create an example on the github documentations
  * TODO consider making the name provider a factory
+ *
+ * TODO modify to use single statement vector update. Should not be used for
+ * relaxed locking scenarios until resolved.
  */
 public class DbUrnFieldStore<T extends Message> implements CrudStore<T> {
 
@@ -157,6 +160,7 @@ public class DbUrnFieldStore<T extends Message> implements CrudStore<T> {
         Object value = builder.hasField(field)? builder.getField(field) : null;
         setStatementValue(update, offset++, field, value);
       }
+
       update.setString(offset++,  builder.getField(urnField).toString());
 
       if (null != vectorField) {
@@ -168,6 +172,7 @@ public class DbUrnFieldStore<T extends Message> implements CrudStore<T> {
         throw new MessageVectorException(
             builder.getDescriptorForType().getName() + " : " +
             builder.getField(urnField) + " not updated to to vector mismatch");
+
       }
       return (T) builder.build();
     } catch (SQLException e) {

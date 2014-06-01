@@ -54,7 +54,7 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
   private InMemoryStore() {}
 
   @Override
-  public T create(Message.Builder builder) throws CrudException {
+  public synchronized T create(Message.Builder builder) throws CrudException {
 
     // find a urn for the new object
     UUID urn = UUID.randomUUID();
@@ -111,7 +111,7 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
   }
 
   @Override
-  public CrudIterator<T> read(Message.Builder builder) throws CrudException {
+  public synchronized  CrudIterator<T> read(Message.Builder builder) throws CrudException {
     if (builder.hasField(urnField)) {
       // read based on the urn field
       return new FilteringDataIterator<T>(Lists.newArrayList(data), urnField,
@@ -129,7 +129,7 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
   }
 
   @Override
-  public T update(Message.Builder builder) throws CrudException {
+  public synchronized T update(Message.Builder builder) throws CrudException {
     if (!builder.hasField(urnField)) {
       throw new IllegalArgumentException("Update provided does not include " +
           "a value for the urn field");
@@ -177,12 +177,12 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
         return result;
       }
     }
-    throw new IllegalArgumentException("Update passed message that was not " +
+    throw new MessageNotFound("Update passed message that was not " +
         "stored. Update not possible");
   }
 
   @Override
-  public void delete(T message) throws CrudException {
+  public synchronized void delete(T message) throws CrudException {
     // TODO 20131111 Implement based on urn column
     for (int i = 0; i < data.size(); i++) {
       T old = data.get(i);
@@ -197,7 +197,7 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
         return;
       }
     }
-    throw new CrudException("Failed to delete missing message");
+    throw new MessageNotFound("Failed to delete missing message");
   }
 
   @Override

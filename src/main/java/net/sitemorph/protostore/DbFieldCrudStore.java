@@ -189,7 +189,10 @@ public class DbFieldCrudStore<T extends Message> implements CrudStore<T> {
       // update has the last field as the id 'always' as it is the where
       setStatementValue(update, offset, idDescriptor,
           builder.getField(idDescriptor));
-      update.executeUpdate();
+      int updated = update.executeUpdate();
+      if (0 == updated) {
+        throw new MessageNotFound("Attempt to update failed as not found");
+      }
       return (T) builder.build();
     } catch (SQLException e) {
       throw new CrudException("Error updating store", e);
@@ -220,7 +223,10 @@ public class DbFieldCrudStore<T extends Message> implements CrudStore<T> {
     try {
       setStatementValue(delete, 1, idDescriptor,
           message.getField(idDescriptor));
-      delete.executeUpdate();
+      int deleted = delete.executeUpdate();
+      if (0 == deleted) {
+        throw new MessageNotFound("Attempt to delete failed as not found");
+      }
     } catch (SQLException e) {
       throw new CrudException("Error deleting from store", e);
     }
