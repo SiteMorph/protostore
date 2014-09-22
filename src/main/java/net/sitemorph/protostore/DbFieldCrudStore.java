@@ -441,7 +441,7 @@ public class DbFieldCrudStore<T extends Message> implements CrudStore<T> {
         read.toString());
   }
 
-  static void setStatementValue(PreparedStatement statement, int index,
+  public static void setStatementValue(PreparedStatement statement, int index,
       FieldDescriptor field, Object value) throws SQLException, CrudException {
     if (null == value) {
       statement.setNull(index, index);
