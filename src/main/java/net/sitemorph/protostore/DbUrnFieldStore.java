@@ -197,7 +197,8 @@ public class DbUrnFieldStore<T extends Message> implements CrudStore<T> {
             "vector clock mismatch");
       }
     } catch (SQLException e) {
-      throw new CrudException("Error deleting urn crud value", e);
+      throw new CrudException("Error deleting urn crud value: " +
+          e.getMessage(), e);
     }
   }
 
