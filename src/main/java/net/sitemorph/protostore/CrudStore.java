@@ -1,7 +1,6 @@
 package net.sitemorph.protostore;
 
 import com.google.protobuf.Message;
-import com.google.protobuf.Message.Builder;
 
 /**
  * A basic store supporting create read update and delete operations for a proto
@@ -22,7 +21,7 @@ public interface CrudStore<T extends Message> {
    * Read a representation based on the fields set in the builder. This method
    * supports both ID and secondary index selection.
    *
-   * @param builder
+   * @param builder for the selection of messages
    * @return iterator over representation messages.
    */
   public CrudIterator<T> read(T.Builder builder) throws CrudException;
