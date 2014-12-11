@@ -18,22 +18,23 @@ import java.util.List;
 public class ReaderFactory<T extends Message> {
 
   private CrudFactory factory;
-  private List<Reader> readerList = Lists.newArrayList();
+  private List<CrudReader> readerList = Lists.newArrayList();
 
-  private ReaderFactory(CrudFactory factory) {
+  public ReaderFactory(CrudFactory factory) {
     this.factory = factory;
   }
 
-  public Reader<T> getReader(T.Builder builder) throws CrudException {
+  public CrudReader<T> getReader(T.Builder builder) throws CrudException {
     CrudStore<T> store = factory.getCrudStore(builder);
-    Reader<T> reader = new Reader<T>(factory, builder, this);
+    CrudReader<T> reader = new CrudReader<T>(factory, builder, this);
     readerList.add(reader);
     return reader;
   }
 
   public void close() throws CrudException {
-    for (Reader reader : readerList) {
+    for (CrudReader reader : readerList) {
       reader.close();
     }
+    readerList.clear();
   }
 }

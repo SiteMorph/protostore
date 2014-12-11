@@ -11,7 +11,7 @@ import java.util.List;
  *
  * @author damien@sitemorph.net
  */
-public class Reader<T extends Message> implements Iterable<T> {
+public class CrudReader<T extends Message> implements Iterable<T> {
 
   private final CrudFactory storeFactory;
   private final T.Builder builder;
@@ -19,7 +19,7 @@ public class Reader<T extends Message> implements Iterable<T> {
   private List<IteratorAdaptor> closeMe = Lists.newArrayList();
   private List<CrudStore> stores = Lists.newArrayList();
 
-  Reader(CrudFactory storeFactory, T.Builder builder,
+  public CrudReader(CrudFactory storeFactory, T.Builder builder,
       ReaderFactory<T> readerFactory) {
     this.storeFactory = storeFactory;
     this.builder = builder;

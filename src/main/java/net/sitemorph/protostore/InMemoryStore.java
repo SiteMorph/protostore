@@ -177,7 +177,7 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
         return result;
       }
     }
-    throw new MessageNotFound("Update passed message that was not " +
+    throw new MessageNotFoundException("Update passed message that was not " +
         "stored. Update not possible");
   }
 
@@ -197,7 +197,7 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
         return;
       }
     }
-    throw new MessageNotFound("Failed to delete missing message");
+    throw new MessageNotFoundException("Failed to delete missing message");
   }
 
   @Override
