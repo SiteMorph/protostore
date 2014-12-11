@@ -6,7 +6,7 @@ package net.sitemorph.protostore;
  *
  * @author dak
  */
-public interface CrudIterator<T>  {
+public interface CrudIterator<T> {
 
   public T next() throws CrudException;
 
