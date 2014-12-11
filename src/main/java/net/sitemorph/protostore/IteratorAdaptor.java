@@ -8,11 +8,11 @@ import java.util.NoSuchElementException;
  */
 public class IteratorAdaptor<T> implements Iterator<T> {
 
-  private volatile Reader reader;
+  private volatile CrudReader reader;
   private volatile CrudIterator<T> iterator;
   private volatile boolean closed = false;
 
-  public IteratorAdaptor(CrudIterator<T> iterator, Reader reader) {
+  public IteratorAdaptor(CrudIterator<T> iterator, CrudReader reader) {
     this.iterator = iterator;
     this.reader = reader;
   }

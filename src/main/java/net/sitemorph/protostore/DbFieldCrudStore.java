@@ -191,7 +191,7 @@ public class DbFieldCrudStore<T extends Message> implements CrudStore<T> {
           builder.getField(idDescriptor));
       int updated = update.executeUpdate();
       if (0 == updated) {
-        throw new MessageNotFound("Attempt to update failed as not found");
+        throw new MessageNotFoundException("Attempt to update failed as not found");
       }
       return (T) builder.build();
     } catch (SQLException e) {
@@ -225,7 +225,7 @@ public class DbFieldCrudStore<T extends Message> implements CrudStore<T> {
           message.getField(idDescriptor));
       int deleted = delete.executeUpdate();
       if (0 == deleted) {
-        throw new MessageNotFound("Attempt to delete failed as not found");
+        throw new MessageNotFoundException("Attempt to delete failed as not found");
       }
     } catch (SQLException e) {
       throw new CrudException("Error deleting from store", e);
