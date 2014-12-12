@@ -202,9 +202,9 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
 
   @Override
   public void close() throws CrudException {
-    data.clear();
-    indexes.clear();
-
+    // Do nothing as the close operation is intended to release access to the
+    // store specifically not clear it's contents. Multiple references may be
+    // held to the in memory store. Once all are released then GC will collect
   }
 
   static void updateVector(Message.Builder builder,
