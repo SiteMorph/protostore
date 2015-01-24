@@ -479,6 +479,9 @@ public class DbFieldCrudStore<T extends Message> implements CrudStore<T> {
       case DOUBLE:
         statement.setDouble(index, (Double)value);
         break;
+      case BYTES :
+        statement.setBytes(index, (byte[]) value);
+        break;
       default:
         throw new CrudException("Index could not be generated for " +
             "unsupported type: " + field.getType().name());

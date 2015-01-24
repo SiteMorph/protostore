@@ -25,9 +25,9 @@ import java.util.Set;
 public class DbFieldIterator<T extends Message> implements CrudIterator<T> {
 
   private final ResultSet resultSet;
-  private T.Builder prototype;
+  private Message.Builder prototype;
 
-  public DbFieldIterator(T.Builder builder, ResultSet resultSet) {
+  public DbFieldIterator(Message.Builder builder, ResultSet resultSet) {
     // nasty setup required
     prototype = builder;
     this.resultSet = resultSet;
@@ -61,9 +61,10 @@ public class DbFieldIterator<T extends Message> implements CrudIterator<T> {
     return getCrudFieldList(descriptor, null, skip);
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public T next() throws CrudException {
-    T.Builder next = prototype.clone();
+    Message.Builder next = prototype.clone();
     try {
       resultSet.next();
       Descriptor descriptor = prototype.getDescriptorForType();
@@ -107,9 +108,10 @@ public class DbFieldIterator<T extends Message> implements CrudIterator<T> {
             }
             value = enumDescriptor;
             break;
-
+          case BYTES :
+            value = resultSet.getBytes(offset++);
+            break;
           //case GROUP:
-          //case BYTES:
           //case MESSAGE:
           default:
             throw new CrudException("Unsupported proto field type: " +
