@@ -353,13 +353,19 @@ public class DbUrnFieldStore<T extends Message> implements CrudStore<T> {
       // look for the urn field descriptor in the field definition list
       Descriptor descriptor = result.prototype.getDescriptorForType();
       for (FieldDescriptor field : descriptor.getFields()) {
-        if (field.getName().equals(field)) {
+        if (field.getName().equals(urnField)) {
           result.urnField = field;
           break;
         }
       }
       if (null == result.urnField) {
-        throw new CrudException("Error locating urn field by name " + urnField);
+        StringBuilder fields = new StringBuilder();
+        for (FieldDescriptor field : descriptor.getFields()) {
+          fields.append(field.getName())
+              .append(", ");
+        }
+        throw new CrudException("Error locating urn field by name " + urnField +
+            " in field list " + fields.toString());
       }
       return this;
     }
