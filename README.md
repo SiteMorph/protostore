@@ -27,7 +27,7 @@ Many database and object refactorings follow a similar pattern.
 
 Features
 --------
-* Store protobuf to SQL.
+* Store protobuf to SQL / memory.
 * Write proto messages for legacy database tables without having to write sql.
 * Primary index support with auto increment and java UUID key support.
 * Secondary indexes on additional field values.
@@ -38,10 +38,8 @@ Features
 Limitations
 -----------
 * MySQL like syntax for now.
-* Limited query ability.
-* Only supports protobuf 2.4.1 style syntax.
 * Only supports iteration of values, no aggregation functions.
-* No roll back on build error.
+* No roll back on message build error.
 * Specific drivers weren't adapted to use a vector adaptor to allow different
   drivers to use internal features for locking as there is still no general
   distributed locking solution assumed.
@@ -68,7 +66,8 @@ Both store examples follow a similar usage pattern:
       .setConnection(sqlConnection)
       .setPrototype(MyMessage.newBuilder())
       .setTableName("MyMessageTable")
-      .setUrnColumn("uuid")
+      .setUrnField("urn")
+      .setVectorField("vector")
       .addIndexField("secondaryIndex")
       .setSortOrder("someSortField")
       .build();
@@ -119,6 +118,10 @@ environment consider implementing unit tests and system tests.
 
 Change Log
 ----------
+
+4.3.1
+* Changed to using protobuf 2.5 and added a number of features.
+
 2.9.0
 * Added support for long auto incremented keys to the field crud store. This 
   should work transparently using the message id field polymorphism.
