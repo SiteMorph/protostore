@@ -2,6 +2,7 @@ package net.sitemorph.protostore;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.protobuf.ByteString;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
@@ -480,7 +481,7 @@ public class DbFieldCrudStore<T extends Message> implements CrudStore<T> {
         statement.setDouble(index, (Double)value);
         break;
       case BYTES :
-        statement.setBytes(index, (byte[]) value);
+        statement.setBytes(index, ((ByteString) value).toByteArray());
         break;
       default:
         throw new CrudException("Index could not be generated for " +
