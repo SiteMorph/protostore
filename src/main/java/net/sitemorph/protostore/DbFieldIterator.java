@@ -1,6 +1,7 @@
 package net.sitemorph.protostore;
 
 import com.google.common.collect.Sets;
+import com.google.protobuf.ByteString;
 import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.Descriptors.EnumValueDescriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
@@ -109,7 +110,7 @@ public class DbFieldIterator<T extends Message> implements CrudIterator<T> {
             value = enumDescriptor;
             break;
           case BYTES :
-            value = resultSet.getBytes(offset++);
+            value = ByteString.copyFrom(resultSet.getBytes(offset++));
             break;
           //case GROUP:
           //case MESSAGE:
