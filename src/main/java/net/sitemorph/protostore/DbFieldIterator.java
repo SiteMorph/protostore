@@ -110,7 +110,12 @@ public class DbFieldIterator<T extends Message> implements CrudIterator<T> {
             value = enumDescriptor;
             break;
           case BYTES :
-            value = ByteString.copyFrom(resultSet.getBytes(offset++));
+            byte[] data = resultSet.getBytes(offset++);
+            if (null != data && 0 < data.length) {
+              value = ByteString.copyFrom(data);
+            } else {
+              value = null;
+            }
             break;
           //case GROUP:
           //case MESSAGE:
