@@ -14,7 +14,7 @@
   <artifactId>protostore</artifactId>
   <packaging>jar</packaging>
   <name>SiteMorph protobuf persistence</name>
-  <version>4.4.3</version>
+  <version>4.4.4</version>
 
   <dependencies>
 

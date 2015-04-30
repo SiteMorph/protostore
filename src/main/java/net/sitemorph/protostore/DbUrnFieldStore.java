@@ -1,7 +1,5 @@
 package net.sitemorph.protostore;
 
-import static net.sitemorph.protostore.DbFieldCrudStore.setStatementValue;
-
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.protobuf.Descriptors.Descriptor;
@@ -15,6 +13,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+
+import static net.sitemorph.protostore.DbFieldCrudStore.setStatementValue;
 
 /**
  * URN keyed data store using columnar storage like the field iterator but uses
@@ -241,8 +241,22 @@ public class DbUrnFieldStore<T extends Message> implements CrudStore<T> {
         throw new CrudException("Connection null. Please provide a connector");
       }
 
+
       Descriptor descriptor = result.prototype.getDescriptorForType();
       List<FieldDescriptor> fields = descriptor.getFields();
+      for (String index : indexes) {
+        boolean found = false;
+        for (FieldDescriptor field : fields) {
+          if (field.getName().equals(index)) {
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          throw new CrudException("An undefined index field was specified: " +
+              index);
+        }
+      }
 
       // Create
       StringBuilder create = new StringBuilder();
