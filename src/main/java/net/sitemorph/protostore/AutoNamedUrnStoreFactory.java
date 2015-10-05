@@ -52,11 +52,11 @@ public class AutoNamedUrnStoreFactory implements SqlNamedStoreFactory {
   }
 
   @Override
-  public CrudStore<? extends Message> getStore(Message.Builder builder)
+  public <T extends Message> CrudStore<T> getCrudStore(T.Builder builder)
       throws CrudException {
     String name = builder.getDescriptorForType().getFullName();
     if (stores.containsKey(name) && null != stores.get(name)) {
-      return stores.get(name);
+      return (CrudStore<T>) stores.get(name);
     }
     DbUrnFieldStore.Builder<? extends Message> store =
         new DbUrnFieldStore.Builder<Message>();
@@ -82,7 +82,7 @@ public class AutoNamedUrnStoreFactory implements SqlNamedStoreFactory {
     }
     CrudStore<? extends Message> result = store.build();
     stores.put(name, result);
-    return result;
+    return (CrudStore<T>) result;
   }
 
   public AutoNamedUrnStoreFactory registerMessage(Message.Builder builder) {

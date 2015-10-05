@@ -70,6 +70,7 @@ public class DbFieldCrudStore<T extends Message> implements CrudStore<T> {
   }
 
 
+  @SuppressWarnings("unchecked")
   @Override
   public T create(Message.Builder builder) throws CrudException {
     try {
@@ -114,15 +115,13 @@ public class DbFieldCrudStore<T extends Message> implements CrudStore<T> {
    *
    * Also note that indexes require integral, enum or string values.
    *
-   * @param builder
+   * @param builder context to read elements using a prototype.
    * @return iterator over accounts
    * @throws CrudException
    */
   @Override
   public CrudIterator<T> read(Message.Builder builder) throws CrudException {
-
     try {
-
       if (builder.hasField(idDescriptor)) {
         Object value = builder.getField(idDescriptor);
         setStatementValue(read, 1, idDescriptor, value);
@@ -132,8 +131,7 @@ public class DbFieldCrudStore<T extends Message> implements CrudStore<T> {
         return new DbFieldIterator<T>(builder, readAll.executeQuery());
       }
 
-      for (Map.Entry<FieldDescriptor, PreparedStatement> entry :
-          readIndexes.entrySet()) {
+      for (Map.Entry<FieldDescriptor, PreparedStatement> entry : readIndexes.entrySet()) {
         FieldDescriptor field = entry.getKey();
         PreparedStatement statement = entry.getValue();
         if (builder.hasField(field)) {
@@ -141,7 +139,6 @@ public class DbFieldCrudStore<T extends Message> implements CrudStore<T> {
           setStatementValue(statement, 1, field, value);
           return new DbFieldIterator<T>(builder, statement.executeQuery());
         }
-
       }
       // no index value set so return all results
       return new DbFieldIterator<T>(builder, readAll.executeQuery());
@@ -150,6 +147,7 @@ public class DbFieldCrudStore<T extends Message> implements CrudStore<T> {
     }
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public T update(Message.Builder builder) throws CrudException {
     if (!builder.hasField(idDescriptor)) {
