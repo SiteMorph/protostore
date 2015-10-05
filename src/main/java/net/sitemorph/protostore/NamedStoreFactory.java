@@ -7,7 +7,7 @@ import com.google.protobuf.Message;
  *
  * @author damien@sitemorph.net
  */
-public interface NamedStoreFactory {
+public interface NamedStoreFactory extends CrudFactory {
 
   /**
    * Return true if a given type of protobuf message is supported by the store.
@@ -16,14 +16,4 @@ public interface NamedStoreFactory {
    * @return true if the store supports it.
    */
   public boolean supported(Message.Builder builder);
-
-  /**
-   * Get a crud store for the parameterised message type.
-   *
-   * @param builder for message storage
-   * @return the crud store
-   * @throws CrudException
-   */
-  public CrudStore<? extends Message> getStore(Message.Builder builder)
-      throws CrudException;
 }
