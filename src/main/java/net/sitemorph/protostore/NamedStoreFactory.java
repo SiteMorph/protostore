@@ -15,5 +15,5 @@ public interface NamedStoreFactory extends CrudFactory {
    * @param builder to check for
    * @return true if the store supports it.
    */
-  public boolean supported(Message.Builder builder);
+  public <T extends Message> boolean supported(T.Builder builder);
 }
