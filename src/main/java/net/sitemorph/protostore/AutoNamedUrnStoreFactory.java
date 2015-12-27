@@ -1,13 +1,14 @@
 package net.sitemorph.protostore;
 
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Message;
-import com.google.protobuf.Message.Builder;
 
 import java.sql.Connection;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * An automatically named Urn store factory that offers automatic named storage
@@ -30,15 +31,15 @@ public class AutoNamedUrnStoreFactory implements SqlNamedStoreFactory {
 
   private SortOrder order = null;
   private String sortField = null;
+  private Set<String> indexFields;
 
   private Connection connection;
   private Map<String, CrudStore<? extends Message>> stores = Maps.newHashMap();
 
-  public AutoNamedUrnStoreFactory() {}
+  private AutoNamedUrnStoreFactory() {}
 
-  public AutoNamedUrnStoreFactory(String sortField, SortOrder order) {
-    this.sortField = sortField;
-    this.order = order;
+  public static Builder newBuilder() {
+    return new Builder();
   }
 
   @Override
@@ -47,7 +48,7 @@ public class AutoNamedUrnStoreFactory implements SqlNamedStoreFactory {
   }
 
   @Override
-  public boolean supported(Builder builder) {
+  public <T extends Message> boolean supported(T.Builder builder) {
     return stores.containsKey(builder.getDescriptorForType().getFullName());
   }
 
@@ -70,7 +71,7 @@ public class AutoNamedUrnStoreFactory implements SqlNamedStoreFactory {
       if (VECTOR.equals(field.getName())) {
         store.setVectorField(VECTOR);
       }
-      if (field.getName().endsWith(URN_SUFFIX)) {
+      if (field.getName().endsWith(URN_SUFFIX) || indexFields.contains(name)) {
         store.addIndexField(field.getName());
       }
       if (null != sortField && field.getName().equals(sortField)) {
@@ -85,8 +86,29 @@ public class AutoNamedUrnStoreFactory implements SqlNamedStoreFactory {
     return (CrudStore<T>) result;
   }
 
-  public AutoNamedUrnStoreFactory registerMessage(Message.Builder builder) {
-    stores.put(builder.getDescriptorForType().getFullName(), null);
-    return this;
+  public static class Builder {
+
+    private AutoNamedUrnStoreFactory result;
+
+    private Builder() {
+      result = new AutoNamedUrnStoreFactory();
+      result.indexFields = Sets.newHashSet();
+    }
+
+    public Builder registerSortField(String sortField, SortOrder order) {
+      result.sortField = sortField;
+      result.order = order;
+      return this;
+    }
+
+    public Builder registerIndexName(String fieldName) {
+      result.indexFields.add(fieldName);
+      return this;
+    }
+
+    public Builder registerMessage(Message.Builder builder) {
+      result.stores.put(builder.getDescriptorForType().getFullName(), null);
+      return this;
+    }
   }
 }
