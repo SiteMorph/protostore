@@ -110,5 +110,9 @@ public class AutoNamedUrnStoreFactory implements SqlNamedStoreFactory {
       result.stores.put(builder.getDescriptorForType().getFullName(), null);
       return this;
     }
+
+    public AutoNamedUrnStoreFactory build() {
+      return result;
+    }
   }
 }
