@@ -29,9 +29,8 @@ public class AutoNamedUrnStoreFactory implements SqlNamedStoreFactory {
   private static final String VECTOR = "vector";
   private static final String URN_SUFFIX = "Urn";
 
-  private SortOrder order = null;
-  private String sortField = null;
   private Set<String> indexFields;
+  private Map<String, SortOrder> sortFields;
 
   private Connection connection;
   private Map<String, CrudStore<? extends Message>> stores = Maps.newHashMap();
@@ -74,9 +73,9 @@ public class AutoNamedUrnStoreFactory implements SqlNamedStoreFactory {
       if (fieldName.endsWith(URN_SUFFIX) || indexFields.contains(fieldName)) {
         store.addIndexField(fieldName);
       }
-    }
-    if (null != sortField) {
-      store.setSortOrder(sortField, order);
+      if (sortFields.containsKey(fieldName)) {
+        store.setSortOrder(fieldName, sortFields.get(fieldName));
+      }
     }
     CrudStore<? extends Message> result = store.build();
     stores.put(name, result);
@@ -90,11 +89,11 @@ public class AutoNamedUrnStoreFactory implements SqlNamedStoreFactory {
     private Builder() {
       result = new AutoNamedUrnStoreFactory();
       result.indexFields = Sets.newHashSet();
+      result.sortFields = Maps.newHashMap();
     }
 
     public Builder registerSortField(String sortField, SortOrder order) {
-      result.sortField = sortField;
-      result.order = order;
+      result.sortFields.put(sortField, order);
       return this;
     }
 
