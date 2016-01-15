@@ -66,19 +66,16 @@ public class AutoNamedUrnStoreFactory implements SqlNamedStoreFactory {
         .setPrototype(builder)
         .setTableName(descriptor.getName())
         .setUrnField(URN_FIELD);
-    boolean sortFound = false;
     for (FieldDescriptor field : descriptor.getFields()) {
-      if (VECTOR.equals(field.getName())) {
+      String fieldName = field.getName();
+      if (VECTOR.equals(fieldName)) {
         store.setVectorField(VECTOR);
       }
-      if (field.getName().endsWith(URN_SUFFIX) || indexFields.contains(name)) {
-        store.addIndexField(field.getName());
-      }
-      if (null != sortField && field.getName().equals(sortField)) {
-        sortFound = true;
+      if (fieldName.endsWith(URN_SUFFIX) || indexFields.contains(fieldName)) {
+        store.addIndexField(fieldName);
       }
     }
-    if (sortFound && null != sortField && null != order) {
+    if (null != sortField) {
       store.setSortOrder(sortField, order);
     }
     CrudStore<? extends Message> result = store.build();
