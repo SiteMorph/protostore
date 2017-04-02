@@ -4,7 +4,7 @@ package net.sitemorph.queue;
 // users and such
 
 option java_package = "net.sitemorph.queue";
-option java_outer_classname = "Message";
+option java_outer_classname = "Tasks";
 
 message Task {
   // The urn is the item identifier

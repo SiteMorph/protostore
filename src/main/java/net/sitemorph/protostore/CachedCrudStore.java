@@ -1,7 +1,6 @@
 package net.sitemorph.protostore;
 
 import com.google.protobuf.Message;
-import com.google.protobuf.Message.Builder;
 
 /**
  * Cached crud store loads the contents of a crud store into an in memory store and persists
@@ -10,20 +9,73 @@ import com.google.protobuf.Message.Builder;
  * achieved using an in memory crud store to read all items and fulfil all read requests while
  * the underlying store handles all create, update, delete operations.
  */
-public class CachedCrudStore<T extends Message> implements CrudStore<T>{
+public class CachedCrudStore<T extends Message> implements CrudStore<T> {
+
+  private final CrudStore<T> writeStore;
+  private final InMemoryStore<T> cache;
+
+  private CachedCrudStore(CrudStore<T> writeStore, InMemoryStore<T> cache) {
+    this.writeStore = writeStore;
+    this.cache = cache;
+  }
+
+  public static class Builder<M extends Message> {
+
+    private InMemoryStore.Builder<M> builder;
+    private CrudStore<M> writeStore;
+
+    public Builder() {
+      builder = new InMemoryStore.Builder<M>();
+    }
+
+    public Builder<M> setPrototype(M.Builder prototype) {
+      builder.setPrototype(prototype);
+      return this;
+    }
+
+    public Builder<M> setUrnField(String urnField) {
+      builder.setUrnField(urnField);
+      return this;
+    }
+
+    public Builder<M> addIndexField(String name) {
+      builder.addIndexField(name);
+      return this;
+    }
+
+    public Builder<M> setSortOrder(String fieldname, SortOrder order) {
+      builder.setSortOrder(fieldname, order);
+      return this;
+    }
+
+    public Builder<M> setVectorField(String fieldName) {
+      builder.setVectorField(fieldName);
+      return this;
+    }
+
+    public Builder<M> setWriteStore(CrudStore<M> writeStore) {
+      this.writeStore = writeStore;
+      return this;
+    }
+
+    public CrudStore<M> build() {
+      InMemoryStore<M> memory = (InMemoryStore<M>) builder.build();
+      return new CachedCrudStore<M>(writeStore, memory);
+    }
+  }
 
   @Override
-  public T create(Builder builder) throws CrudException {
+  public T create(Message.Builder builder) throws CrudException {
     return null;
   }
 
   @Override
-  public CrudIterator<T> read(Builder builder) throws CrudException {
+  public CrudIterator<T> read(Message.Builder builder) throws CrudException {
     return null;
   }
 
   @Override
-  public T update(Builder builder) throws CrudException {
+  public T update(Message.Builder builder) throws CrudException {
     return null;
   }
 
