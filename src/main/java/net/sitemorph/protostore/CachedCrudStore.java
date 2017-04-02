@@ -23,6 +23,7 @@ public class CachedCrudStore<T extends Message> implements CrudStore<T> {
 
     private InMemoryStore.Builder<M> builder;
     private CrudStore<M> writeStore;
+    private M.Builder prototype;
 
     public Builder() {
       builder = new InMemoryStore.Builder<M>();
@@ -30,6 +31,7 @@ public class CachedCrudStore<T extends Message> implements CrudStore<T> {
 
     public Builder<M> setPrototype(M.Builder prototype) {
       builder.setPrototype(prototype);
+      this.prototype = prototype;
       return this;
     }
 
@@ -58,8 +60,13 @@ public class CachedCrudStore<T extends Message> implements CrudStore<T> {
       return this;
     }
 
-    public CrudStore<M> build() {
+    public CrudStore<M> build() throws CrudException {
       InMemoryStore<M> memory = (InMemoryStore<M>) builder.build();
+      CrudIterator<M> priors = writeStore.read(prototype);
+      while (priors.hasNext()) {
+        memory.add(priors.next());
+      }
+      priors.close();;
       return new CachedCrudStore<M>(writeStore, memory);
     }
   }
@@ -71,12 +78,14 @@ public class CachedCrudStore<T extends Message> implements CrudStore<T> {
 
   @Override
   public CrudIterator<T> read(Message.Builder builder) throws CrudException {
-    return null;
+    return cache.read(builder);
   }
 
   @Override
   public T update(Message.Builder builder) throws CrudException {
-    return null;
+    T updated = writeStore.update(builder);
+    cache.refresh(updated);
+    return updated;
   }
 
   @Override

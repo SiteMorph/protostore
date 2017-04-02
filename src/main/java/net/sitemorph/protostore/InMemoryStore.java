@@ -73,28 +73,7 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
     T newValue = (T) builder.build();
     int insertAt;
     if (null != sortField) {
-      insertAt = Collections.binarySearch(data, newValue, new Comparator<T>() {
-        @Override
-        public int compare(T left, T right) {
-          Object leftValue = left.getField(sortField);
-          if (!(leftValue instanceof Comparable)) {
-            throw new IllegalArgumentException("Underlying type is not " +
-                "comparable. Please check your confifuration. for sort field " +
-                sortField.getName());
-          }
-          Object rightValue = right.getField(sortField);
-          if (!(rightValue instanceof Comparable)) {
-            throw new IllegalArgumentException("Underlying type is not " +
-                "comparable. please check your configuration for sort field " +
-                sortField.getName());
-          }
-          if (SortOrder.ASCENDING == direction) {
-            return ((Comparable) leftValue).compareTo(rightValue);
-          } else {
-            return ((Comparable) rightValue).compareTo(leftValue);
-          }
-        }
-      });
+      insertAt = Collections.binarySearch(data, newValue, new InMemoryComparator<T>(sortField, direction));
 
       if (0 > insertAt) {
         // if not exactly found then will be inserted.
@@ -128,6 +107,28 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
     return new AllDataIterator<T>(Lists.newArrayList(data));
   }
 
+  /**
+   * Helper to allow updating of data outside of the normal vector clock / update
+   * operation.
+   *
+   * @param updated item to overwrite a value already stored.
+   */
+  void refresh(T updated) {
+    int index = -1;
+    for (int i = 0; i < data.size(); i++) {
+      if (data.get(i).getField(urnField).equals(updated.getField(urnField))) {
+        index = i;
+        break;
+      }
+    }
+    data.set(index, updated);
+  }
+
+  void add(T item) {
+    data.add(item);
+    Collections.sort(data, new InMemoryComparator<T>(sortField, direction));
+  }
+
   @Override
   public synchronized T update(Message.Builder builder) throws CrudException {
     if (!builder.hasField(urnField)) {
@@ -152,28 +153,7 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
         T result = (T) builder.build();
         data.set(i, result);
         // sort the data in case the update order changed
-        Collections.sort(data, new Comparator<T>() {
-          @Override
-          public int compare(T left, T right) {
-            Object leftValue = left.getField(sortField);
-            if (!(leftValue instanceof Comparable)) {
-              throw new IllegalArgumentException("Underlying type is not " +
-                  "comparable. Please check your configuration. for sort field " +
-                  sortField.getName());
-            }
-            Object rightValue = right.getField(sortField);
-            if (!(rightValue instanceof Comparable)) {
-              throw new IllegalArgumentException("Underlying type is not " +
-                  "comparable. please check your configuration for sort field " +
-                  sortField.getName());
-            }
-            if (SortOrder.ASCENDING == direction) {
-              return ((Comparable) leftValue).compareTo(rightValue);
-            } else {
-              return ((Comparable) rightValue).compareTo(leftValue);
-            }
-          }
-        });
+        Collections.sort(data, new InMemoryComparator<T>(sortField, direction));
         return result;
       }
     }
@@ -342,5 +322,37 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
       }
       return result;
     }
+  }
+
+  private static class InMemoryComparator<L extends Message> implements Comparator<L> {
+
+    private final FieldDescriptor sortField;
+    private final SortOrder direction;
+
+    InMemoryComparator(FieldDescriptor sortField, SortOrder direction) {
+      this.sortField = sortField;
+      this.direction = direction;
+    }
+
+      @Override
+      public int compare(L left, L right) {
+        Object leftValue = left.getField(sortField);
+        if (!(leftValue instanceof Comparable)) {
+          throw new IllegalArgumentException("Underlying type is not " +
+              "comparable. Please check your configuration. for sort field " +
+              sortField.getName());
+        }
+        Object rightValue = right.getField(sortField);
+        if (!(rightValue instanceof Comparable)) {
+          throw new IllegalArgumentException("Underlying type is not " +
+              "comparable. please check your configuration for sort field " +
+              sortField.getName());
+        }
+        if (SortOrder.ASCENDING == direction) {
+          return ((Comparable) leftValue).compareTo(rightValue);
+        } else {
+          return ((Comparable) rightValue).compareTo(leftValue);
+        }
+      }
   }
 }
