@@ -42,7 +42,7 @@ import java.util.UUID;
  */
 public class InMemoryStore<T extends Message> implements CrudStore<T> {
 
-  public  static final long INITIAL_VECTOR = 0;
+  private static final long INITIAL_VECTOR = 0;
   private FieldDescriptor urnField;
   private List<FieldDescriptor> indexes = Lists.newArrayList();
   private List<T> data = Lists.newArrayList();

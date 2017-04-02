@@ -68,6 +68,49 @@
         </configuration>
       </plugin>
 
+        <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <version>1.7</version>
+            <executions>
+                <execution>
+                    <id>generate-test-sources</id>
+                    <phase>generate-test-sources</phase>
+                    <configuration>
+                        <target>
+                            <mkdir dir="target/generated-test-sources"/>
+                            <exec executable="protoc">
+                                <arg value="--java_out=target/generated-test-sources"/>
+                                <arg value="src/test/proto/test-model.proto"/>
+                            </exec>
+                        </target>
+                    </configuration>
+                    <goals>
+                        <goal>run</goal>
+                    </goals>
+                </execution>
+            </executions>
+        </plugin>
+
+        <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>build-helper-maven-plugin</artifactId>
+            <version>1.7</version>
+            <executions>
+                <execution>
+                    <id>add-source</id>
+                    <phase>generate-test-sources</phase>
+                    <goals>
+                        <goal>add-source</goal>
+                    </goals>
+                    <configuration>
+                        <sources>
+                            <source>target/generated-test-sources</source>
+                        </sources>
+                    </configuration>
+                </execution>
+            </executions>
+        </plugin>
+
     </plugins>
   </build>
 </project>

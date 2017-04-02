@@ -1,0 +1,23 @@
+package net.sitemorph.queue;
+
+// Proto representation of account information and admin details of accounts
+// users and such
+
+option java_package = "net.sitemorph.queue";
+option java_outer_classname = "Message";
+
+message Task {
+  // The urn is the item identifier
+  required string urn = 1;
+  // The path is the queue name using slash notation
+  required string path = 2;
+  // The timestamp is used to order queue items
+  required int64 runTime = 3;
+  // The data associated with the queue item
+  optional string data = 4;
+  // The vector field which is updated by the protostore on update
+  required int64 vector = 5;
+  // The claim used in connection with the vector to claim tasks
+  optional string claim = 6;
+  optional int64 claimTimeout = 7;
+}
