@@ -1,4 +1,4 @@
-import net.sitemorph.protostore.CachedCrudStore;
+import net.sitemorph.protostore.PreloadUrnCrudStore;
 import net.sitemorph.protostore.CrudException;
 import net.sitemorph.protostore.CrudIterator;
 import net.sitemorph.protostore.CrudStore;
@@ -28,7 +28,7 @@ public class CacheCrudStoreTest {
     memoryStore.create(Task.newBuilder()
         .setPath("/hello")
         .setRunTime(System.currentTimeMillis()));
-    CrudStore<Task> cacheStore = new CachedCrudStore.Builder<Task>()
+    CrudStore<Task> cacheStore = new PreloadUrnCrudStore.Builder<Task>()
         .setPrototype(Task.newBuilder())
         .setUrnField("urn")
         .addIndexField("path")
