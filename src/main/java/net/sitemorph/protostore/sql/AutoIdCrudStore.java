@@ -26,12 +26,12 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Implementation of a store based on database column fields. This assumes that
- * the table uses an auto ID based keying system for generating IDs on insert.
+ * Legacy database protobuf mapping storage engine which supports Auto ID
+ * generation etc and typical database use cases.
  *
  * @author damien@sitemorph.net
  */
-public class DbFieldCrudStore<T extends Message> implements CrudStore<T> {
+public class AutoIdCrudStore<T extends Message> implements CrudStore<T> {
 
   private Connection connection;
   private PreparedStatement create;
@@ -246,19 +246,19 @@ public class DbFieldCrudStore<T extends Message> implements CrudStore<T> {
     }
   }
 
-  private DbFieldCrudStore() {
+  private AutoIdCrudStore() {
   }
 
   public static class Builder<F extends Message> {
 
-    private DbFieldCrudStore<F> result;
+    private AutoIdCrudStore<F> result;
     private Set<String> indexes = new HashSet<>();
 
     public Builder() {
-      result = new DbFieldCrudStore<F>();
+      result = new AutoIdCrudStore<F>();
     }
 
-    public DbFieldCrudStore<F> build() throws CrudException {
+    public AutoIdCrudStore<F> build() throws CrudException {
 
       if (null == result.autoIdColumn) {
         throw new CrudException("Required field auto ID column missing");

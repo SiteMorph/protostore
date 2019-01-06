@@ -27,7 +27,7 @@ import java.util.Set;
  *
  * @author damien@sitemorph.net
  */
-public class AutoNamedUrnStoreFactory implements CrudFactory {
+public class AutoNamedFactory implements CrudFactory {
 
   private static final String URN_FIELD = "urn";
   private static final String VECTOR = "vector";
@@ -39,7 +39,7 @@ public class AutoNamedUrnStoreFactory implements CrudFactory {
   private Connection connection;
   private Map<String, CrudStore<? extends Message>> stores = new HashMap<>();
 
-  private AutoNamedUrnStoreFactory() {}
+  private AutoNamedFactory() {}
 
   public static Builder newBuilder(Connection connection) {
     return new Builder(connection);
@@ -57,8 +57,8 @@ public class AutoNamedUrnStoreFactory implements CrudFactory {
     if (stores.containsKey(name) && null != stores.get(name)) {
       return (CrudStore<T>) stores.get(name);
     }
-    DbUrnFieldStore.Builder<? extends Message> store =
-        new DbUrnFieldStore.Builder<Message>();
+    UrnCrudStore.Builder<? extends Message> store =
+        new UrnCrudStore.Builder<Message>();
     Descriptor descriptor = builder.getDescriptorForType();
     store.setConnection(connection)
         .setPrototype(builder)
@@ -83,10 +83,10 @@ public class AutoNamedUrnStoreFactory implements CrudFactory {
 
   public static class Builder {
 
-    private AutoNamedUrnStoreFactory result;
+    private AutoNamedFactory result;
 
     private Builder(Connection connection) {
-      result = new AutoNamedUrnStoreFactory();
+      result = new AutoNamedFactory();
       result.connection = connection;
       result.indexFields = new HashSet<>();
       result.sortFields = new HashMap<>();
@@ -107,7 +107,7 @@ public class AutoNamedUrnStoreFactory implements CrudFactory {
       return this;
     }
 
-    public AutoNamedUrnStoreFactory build() {
+    public AutoNamedFactory build() {
       return result;
     }
   }

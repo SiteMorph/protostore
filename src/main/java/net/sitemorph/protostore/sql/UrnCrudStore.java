@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import static net.sitemorph.protostore.sql.DbFieldCrudStore.setStatementValue;
+import static net.sitemorph.protostore.sql.AutoIdCrudStore.setStatementValue;
 
 /**
  * URN keyed data store using columnar storage like the field iterator but uses
@@ -30,19 +30,6 @@ import static net.sitemorph.protostore.sql.DbFieldCrudStore.setStatementValue;
  *
  * The goal of this class is to allow UUID based crud and avoid db locks with
  * multiple front end.
- *
- * TODO(dka) Implement update based on both vector and ID to prevent theoretical
- * race condition that could occur between 'read' of an updated value vector and
- * a concurrent read before the immediately proceeding write. Note though that
- * this second read would then error when updating as it would be out of date.
- * This can be fixed by using the update counter or a transaction which acquires
- * a write lock for the table.
- *
- * TODO(dka) Implement different vector start clocks as a best effort way of
- * avoiding the situation where there is a create, delete create with the
- * same random uuid and both have the same vector clock but are different
- * messages. This is only a remote possibility assuming that random UUID
- * reuse is low.
  *
  * @author damien@sitemorph.net
  *
@@ -52,7 +39,7 @@ import static net.sitemorph.protostore.sql.DbFieldCrudStore.setStatementValue;
  * TODO modify to use single statement vector update. Should not be used for
  * relaxed locking scenarios until resolved.
  */
-public class DbUrnFieldStore<T extends Message> implements CrudStore<T> {
+public class UrnCrudStore<T extends Message> implements CrudStore<T> {
 
   private Connection connection;
   private PreparedStatement create, readAll, update, delete, readUrn;
@@ -64,7 +51,7 @@ public class DbUrnFieldStore<T extends Message> implements CrudStore<T> {
   private FieldDescriptor sortField;
   private FieldDescriptor vectorField;
 
-  private DbUrnFieldStore() {
+  private UrnCrudStore() {
     readIndexes = new HashMap<>();
   }
 
@@ -158,7 +145,7 @@ public class DbUrnFieldStore<T extends Message> implements CrudStore<T> {
 
 
   @Override
-  public T update(Message.Builder builder) throws CrudException {
+  public T update(T.Builder builder) throws CrudException {
     if(!builder.hasField(urnField)) {
       throw new CrudException("Can't update message due to missing urn");
     }
@@ -243,14 +230,14 @@ public class DbUrnFieldStore<T extends Message> implements CrudStore<T> {
 
   public static class Builder<F extends Message> {
 
-    private DbUrnFieldStore<F> result;
+    private UrnCrudStore<F> result;
     private Set<String> indexes = new HashSet<>();
 
     public Builder() {
-      result = new DbUrnFieldStore<>();
+      result = new UrnCrudStore<>();
     }
 
-    public DbUrnFieldStore<F> build() throws CrudException {
+    public UrnCrudStore<F> build() throws CrudException {
       if (null == result.prototype) {
         throw new CrudException("Protobuf prototype required but not set.");
       }
@@ -305,19 +292,19 @@ public class DbUrnFieldStore<T extends Message> implements CrudStore<T> {
 
       // Read all
       try {
-        result.readAll = DbFieldCrudStore.getStatement(result.connection,
+        result.readAll = AutoIdCrudStore.getStatement(result.connection,
             result.tableName, fields, null, result.sortField,
             result.sortDirection);
         // read indexes
         for (FieldDescriptor field : fields) {
           if (indexes.contains(field.getName())) {
             result.readIndexes.put(field,
-                DbFieldCrudStore.getStatement(result.connection,
+                AutoIdCrudStore.getStatement(result.connection,
                     result.tableName, fields, field, result.sortField,
                     result.sortDirection));
           }
         }
-        result.readUrn = DbFieldCrudStore.getStatement(result.connection,
+        result.readUrn = AutoIdCrudStore.getStatement(result.connection,
             result.tableName, fields, result.urnField, result.sortField,
             result.sortDirection);
       } catch (SQLException e) {

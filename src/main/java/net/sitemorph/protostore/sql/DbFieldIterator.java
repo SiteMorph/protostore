@@ -31,7 +31,7 @@ public class DbFieldIterator<T extends Message> implements CrudIterator<T> {
   private final ResultSet resultSet;
   private Message.Builder prototype;
 
-  public DbFieldIterator(Message.Builder builder, ResultSet resultSet) {
+  public DbFieldIterator(T.Builder builder, ResultSet resultSet) {
     // nasty setup required
     prototype = builder;
     this.resultSet = resultSet;

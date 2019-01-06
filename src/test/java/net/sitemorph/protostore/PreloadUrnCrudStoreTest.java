@@ -68,6 +68,5 @@ public class PreloadUrnCrudStoreTest {
     assertTrue(tasks.hasNext(), "Expected to have a result");
     assertEquals(expect, tasks.next(), "Expected home task");
     assertFalse(tasks.hasNext(), "Didn't expect the other tasks");
-
   }
 }
