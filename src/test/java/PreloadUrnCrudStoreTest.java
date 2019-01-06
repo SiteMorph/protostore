@@ -1,16 +1,18 @@
-import net.sitemorph.protostore.PreloadUrnCrudStore;
+
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
+
 import net.sitemorph.protostore.CrudException;
 import net.sitemorph.protostore.CrudIterator;
 import net.sitemorph.protostore.CrudStore;
 import net.sitemorph.protostore.InMemoryStore;
+import net.sitemorph.protostore.PreloadUrnCrudStore;
 import net.sitemorph.protostore.SortOrder;
 import net.sitemorph.queue.Tasks.Task;
 
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
 
 /**
  * Tests for the cache crud store which uses an in memory store for reads.

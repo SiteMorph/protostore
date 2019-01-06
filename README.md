@@ -4,7 +4,7 @@ protostore - A very simple CRUD storage system for protobuf messages
 Google Protobuf Serialisation Data Access Object Library.
 
 Supports serialisation of protobuf messages to sql columnar storage with
-Create Read Update Delete semantics, primary key on UUID or auto-increment and 
+Create Read Update Delete semantics, primary key on UUID or auto-increment and
 secondary indexes.
 
 The goal of this project is to provide a very light weight mechanism to support
@@ -119,11 +119,14 @@ environment consider implementing unit tests and system tests.
 Change Log
 ----------
 
+4.7.0
+* Updated dependencies.
+
 4.3.1
 * Changed to using protobuf 2.5 and added a number of features.
 
 2.9.0
-* Added support for long auto incremented keys to the field crud store. This 
+* Added support for long auto incremented keys to the field crud store. This
   should work transparently using the message id field polymorphism.
 
 Logging
