@@ -1,32 +1,29 @@
-package net.sitemorph.protostore;
+package net.sitemorph.protostore.helper;
 
+import net.sitemorph.protostore.CrudException;
+import net.sitemorph.protostore.CrudIterator;
+import net.sitemorph.protostore.MessageNotFoundException;
+
+import com.google.protobuf.Message;
+
+import java.io.Closeable;
 import java.util.Iterator;
-import java.util.NoSuchElementException;
 
 /**
  * Iterator adaptor that
  */
-public class IteratorAdaptor<T> implements Iterator<T> {
+public class IteratorAdaptor<T extends Message> implements Iterator<T>, Closeable {
 
-  private volatile CrudReader reader;
   private volatile CrudIterator<T> iterator;
-  private volatile boolean closed = false;
 
-  public IteratorAdaptor(CrudIterator<T> iterator, CrudReader reader) {
+  public IteratorAdaptor(CrudIterator<T> iterator) {
     this.iterator = iterator;
-    this.reader = reader;
   }
 
   @Override
   public boolean hasNext() {
     try {
-      boolean hasNext = iterator.hasNext();
-      if (!hasNext && !closed) {
-        iterator.close();
-        closed = true;
-        reader.closed(this);
-      }
-      return hasNext;
+      return iterator.hasNext();
     } catch (CrudException e) {
       throw new IteratorAdaptorException("Storage exception checking for " +
           "hasNext item", e);
@@ -37,11 +34,9 @@ public class IteratorAdaptor<T> implements Iterator<T> {
   public T next() {
     try {
       boolean hasNext = iterator.hasNext();
-      if (!hasNext && !closed) {
+      if (!hasNext) {
         iterator.close();
-        closed = true;
-        reader.closed(this);
-        throw new NoSuchElementException("Attempted to access next when " +
+        throw new MessageNotFoundException("Attempted to access next when " +
             "none exists");
       }
       return iterator.next();
@@ -56,11 +51,8 @@ public class IteratorAdaptor<T> implements Iterator<T> {
         "for crud backed iterator");
   }
 
+  @Override
   public void close() throws CrudException {
-    if (!closed) {
-      iterator.close();
-      closed = true;
-      reader.closed(this);
-    }
+    iterator.close();
   }
 }

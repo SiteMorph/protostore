@@ -1,4 +1,12 @@
-package net.sitemorph.protostore;
+package net.sitemorph.protostore.sql;
+
+import net.sitemorph.protostore.CrudException;
+import net.sitemorph.protostore.CrudIterator;
+import net.sitemorph.protostore.CrudStore;
+import net.sitemorph.protostore.ram.InMemoryStore;
+import net.sitemorph.protostore.MessageNotFoundException;
+import net.sitemorph.protostore.MessageVectorException;
+import net.sitemorph.protostore.SortOrder;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Descriptors;
@@ -112,10 +120,10 @@ public class DbFieldCrudStore<T extends Message> implements CrudStore<T> {
    *
    * @param builder context to read elements using a prototype.
    * @return iterator over accounts
-   * @throws CrudException
+   * @throws CrudException when there is an underlying storage error.
    */
   @Override
-  public CrudIterator<T> read(Message.Builder builder) throws CrudException {
+  public CrudIterator<T> readAll(Message.Builder builder) throws CrudException {
     try {
       if (builder.hasField(idDescriptor)) {
         Object value = builder.getField(idDescriptor);

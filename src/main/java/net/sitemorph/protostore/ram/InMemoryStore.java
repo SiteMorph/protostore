@@ -1,4 +1,13 @@
-package net.sitemorph.protostore;
+package net.sitemorph.protostore.ram;
+
+import net.sitemorph.protostore.CrudException;
+import net.sitemorph.protostore.CrudIterator;
+import net.sitemorph.protostore.CrudStore;
+import net.sitemorph.protostore.MessageNotFoundException;
+import net.sitemorph.protostore.MessageVectorException;
+import net.sitemorph.protostore.SortOrder;
+import net.sitemorph.protostore.helper.CollectionIterator;
+import net.sitemorph.protostore.helper.FilteringDataIterator;
 
 import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
@@ -90,7 +99,7 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
   }
 
   @Override
-  public synchronized  CrudIterator<T> read(Message.Builder builder) throws CrudException {
+  public synchronized  CrudIterator<T> readAll(Message.Builder builder) throws CrudException {
     if (builder.hasField(urnField)) {
       // read based on the urn field
       return new FilteringDataIterator<T>(new ArrayList<>(data), urnField,
@@ -104,29 +113,19 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
       }
     }
     // read all data
-    return new AllDataIterator<T>(new ArrayList<>(data));
+    return new CollectionIterator<T>(new ArrayList<>(data));
   }
 
-  /**
-   * Helper to allow updating of data outside of the normal vector clock / update
-   * operation.
-   *
-   * @param updated item to overwrite a value already stored.
-   */
-  void refresh(T updated) {
-    int index = -1;
-    for (int i = 0; i < data.size(); i++) {
-      if (data.get(i).getField(urnField).equals(updated.getField(urnField))) {
-        index = i;
-        break;
-      }
+  @Override
+  public T read(T.Builder prototype) throws CrudException {
+    CrudIterator<T> items = readAll(prototype);
+    if (!items.hasNext()) {
+      items.close();
+      throw new MessageNotFoundException("Message not found: " + prototype.toString());
     }
-    data.set(index, updated);
-  }
-
-  void add(T item) {
-    data.add(item);
-    Collections.sort(data, new InMemoryComparator<T>(sortField, direction));
+    T result = items.next();
+    items.close();
+    return result;
   }
 
   @Override
@@ -182,12 +181,11 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
 
   @Override
   public void close() throws CrudException {
-    // Do nothing as the close operation is intended to release access to the
-    // store specifically not clear it's contents. Multiple references may be
-    // held to the in memory store. Once all are released then GC will collect
+    // free memory on close
+    data.clear();
   }
 
-  static void updateVector(Message.Builder builder,
+  private static void updateVector(Message.Builder builder,
       FieldDescriptor vectorField) {
     Object current = builder.getField(vectorField);
     if (null == current) {
@@ -205,7 +203,7 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
     builder.setField(vectorField, value);
   }
 
-  static void setInitialVector(Message.Builder builder,
+  private static void setInitialVector(Message.Builder builder,
       FieldDescriptor vectorField) {
     builder.setField(vectorField, INITIAL_VECTOR);
   }

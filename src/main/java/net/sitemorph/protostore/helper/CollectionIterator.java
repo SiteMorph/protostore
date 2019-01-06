@@ -1,4 +1,9 @@
-package net.sitemorph.protostore;
+package net.sitemorph.protostore.helper;
+
+import net.sitemorph.protostore.CrudException;
+import net.sitemorph.protostore.CrudIterator;
+
+import com.google.protobuf.Message;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -8,11 +13,11 @@ import java.util.Iterator;
  *
  * @author damien@sitemorph.net
  */
-public class AllDataIterator<T> implements CrudIterator<T> {
+public class CollectionIterator<T extends Message> implements CrudIterator<T> {
 
   private final Iterator<T> iterator;
 
-  public AllDataIterator(Collection<T> data) {
+  public CollectionIterator(Collection<T> data) {
     this.iterator = data.iterator();
   }
 

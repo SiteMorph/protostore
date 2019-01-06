@@ -1,8 +1,14 @@
-package net.sitemorph.protostore;
+package net.sitemorph.protostore.helper;
+
+import net.sitemorph.protostore.CrudException;
+import net.sitemorph.protostore.CrudIterator;
+import net.sitemorph.protostore.CrudStore;
+import net.sitemorph.protostore.MessageNotFoundException;
 
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Message;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -12,10 +18,12 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 /**
- * Preloading crud store which loads all elements into memory on build. Note
- * that this is for small data stores as it reads all data.
+ * Pre-loading cached crud store which loads all elements into memory on build.
+ * Note that this is for small data stores as it reads all data. The store does
+ * not automatically detect underlying storage changes caused by race
+ * conditions.
  *
- * Note that the preload urn store doesn't respect sort order.
+ * Note: that the preload urn store doesn't respect sort order.
  */
 public class PreloadUrnCrudStore<T extends Message> implements CrudStore<T> {
 
@@ -70,7 +78,7 @@ public class PreloadUrnCrudStore<T extends Message> implements CrudStore<T> {
         throw new CrudException("Could not locate urn field: " + urnField);
       }
 
-      CrudIterator<M> priors = writeStore.read(prototype);
+      CrudIterator<M> priors = writeStore.readAll(prototype);
       while (priors.hasNext()) {
         M prior = priors.next();
         String urn = String.valueOf(prior.getField(result.urnDescriptor));
@@ -82,7 +90,7 @@ public class PreloadUrnCrudStore<T extends Message> implements CrudStore<T> {
   }
 
   @Override
-  public T create(Message.Builder builder) throws CrudException {
+  public T create(T.Builder builder) throws CrudException {
     T result = writeStore.create(builder);
     String urn = String.valueOf(result.getField(urnDescriptor));
     urnMap.put(urn, result);
@@ -90,7 +98,7 @@ public class PreloadUrnCrudStore<T extends Message> implements CrudStore<T> {
   }
 
   @Override
-  public CrudIterator<T> read(Message.Builder builder) throws CrudException {
+  public CrudIterator<T> readAll(T.Builder builder) throws CrudException {
     // urn first
     if (builder.hasField(urnDescriptor)) {
       String urn = String.valueOf(builder.getField(urnDescriptor));
@@ -99,7 +107,7 @@ public class PreloadUrnCrudStore<T extends Message> implements CrudStore<T> {
       }
       List<T> singleton = new ArrayList<>();
       singleton.add(urnMap.get(urn));
-      return new AllDataIterator<>(singleton);
+      return new CollectionIterator<>(singleton);
     }
 
     // iterate over the index fields, if one set return that
@@ -111,13 +119,25 @@ public class PreloadUrnCrudStore<T extends Message> implements CrudStore<T> {
             result.add(entry.getValue());
           }
         }
-        return new AllDataIterator<>(result);
+        return new CollectionIterator<>(result);
       }
     }
 
     // return all data
     List<T> result = new ArrayList<>(urnMap.values());
-    return new AllDataIterator<>(result);
+    return new CollectionIterator<>(result);
+  }
+
+  @Override
+  public T read(Message.Builder prototype) throws CrudException {
+    CrudIterator<T> items = readAll(prototype);
+    if (!items.hasNext()) {
+      items.close();
+      throw new MessageNotFoundException("Resource not found for: " + prototype.toString());
+    }
+    T result = items.next();
+    items.close();
+    return result;
   }
 
   @Override
@@ -136,7 +156,7 @@ public class PreloadUrnCrudStore<T extends Message> implements CrudStore<T> {
   }
 
   @Override
-  public void close() throws CrudException {
+  public void close() throws IOException {
     urnMap.clear();
     urnMap = null;
     writeStore.close();

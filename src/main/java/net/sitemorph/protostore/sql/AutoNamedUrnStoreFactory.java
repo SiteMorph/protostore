@@ -1,4 +1,9 @@
-package net.sitemorph.protostore;
+package net.sitemorph.protostore.sql;
+
+import net.sitemorph.protostore.CrudException;
+import net.sitemorph.protostore.CrudStore;
+import net.sitemorph.protostore.SortOrder;
+import net.sitemorph.protostore.SqlNamedStoreFactory;
 
 import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;

@@ -1,4 +1,7 @@
-package net.sitemorph.protostore;
+package net.sitemorph.protostore.sql;
+
+import net.sitemorph.protostore.CrudException;
+import net.sitemorph.protostore.CrudIterator;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Descriptors.Descriptor;

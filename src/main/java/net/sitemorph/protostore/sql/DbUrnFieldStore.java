@@ -1,4 +1,11 @@
-package net.sitemorph.protostore;
+package net.sitemorph.protostore.sql;
+
+import net.sitemorph.protostore.CrudException;
+import net.sitemorph.protostore.CrudIterator;
+import net.sitemorph.protostore.CrudStore;
+import net.sitemorph.protostore.ram.InMemoryStore;
+import net.sitemorph.protostore.MessageVectorException;
+import net.sitemorph.protostore.SortOrder;
 
 import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
@@ -14,7 +21,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import static net.sitemorph.protostore.DbFieldCrudStore.setStatementValue;
+import static net.sitemorph.protostore.sql.DbFieldCrudStore.setStatementValue;
 
 /**
  * URN keyed data store using columnar storage like the field iterator but uses

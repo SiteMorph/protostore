@@ -1,4 +1,7 @@
-package net.sitemorph.protostore;
+package net.sitemorph.protostore.helper;
+
+import net.sitemorph.protostore.CrudException;
+import net.sitemorph.protostore.CrudIterator;
 
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Message;

@@ -1,4 +1,6 @@
-package net.sitemorph.protostore;
+package net.sitemorph.protostore.helper;
+
+import net.sitemorph.protostore.CrudException;
 
 /**
  * Iterator adaptor functions have to throw runtime exceptions as they can't
