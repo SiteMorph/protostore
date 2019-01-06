@@ -1,8 +1,8 @@
 package net.sitemorph.protostore;
 
-import com.google.common.collect.Lists;
 import com.google.protobuf.Message;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -18,7 +18,7 @@ import java.util.List;
 public class ReaderFactory<T extends Message> {
 
   private CrudFactory factory;
-  private List<CrudReader> readerList = Lists.newArrayList();
+  private List<CrudReader> readerList = new ArrayList<>();
 
   public ReaderFactory(CrudFactory factory) {
     this.factory = factory;

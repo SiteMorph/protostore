@@ -1,11 +1,11 @@
 package net.sitemorph.protostore;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Message;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -20,8 +20,8 @@ import java.util.Set;
 public class PreloadUrnCrudStore<T extends Message> implements CrudStore<T> {
 
   private CrudStore<T> writeStore;
-  private Map<String, T> urnMap = Maps.newHashMap();
-  private Set<FieldDescriptor> indexes = Sets.newHashSet();
+  private Map<String, T> urnMap = new HashMap<>();
+  private Set<FieldDescriptor> indexes = new HashSet<>();
   private FieldDescriptor urnDescriptor;
 
   private PreloadUrnCrudStore() {}
@@ -31,7 +31,7 @@ public class PreloadUrnCrudStore<T extends Message> implements CrudStore<T> {
     private CrudStore<M> writeStore;
     private M.Builder prototype;
     private String urnField;
-    private Set<String> indexes = Sets.newHashSet();
+    private Set<String> indexes = new HashSet<>();
 
     public Builder() {}
 
@@ -56,7 +56,7 @@ public class PreloadUrnCrudStore<T extends Message> implements CrudStore<T> {
     }
 
     public CrudStore<M> build() throws CrudException {
-      PreloadUrnCrudStore<M> result = new PreloadUrnCrudStore<M>();
+      PreloadUrnCrudStore<M> result = new PreloadUrnCrudStore<>();
       result.writeStore = writeStore;
 
       for (FieldDescriptor descriptor : prototype.getDescriptorForType().getFields()) {
@@ -97,28 +97,27 @@ public class PreloadUrnCrudStore<T extends Message> implements CrudStore<T> {
       if (!urnMap.containsKey(urn)) {
         throw new MessageNotFoundException("Could not find urn: " + urn);
       }
-      List<T> singleton = Lists.newArrayList();
+      List<T> singleton = new ArrayList<>();
       singleton.add(urnMap.get(urn));
-      return new AllDataIterator<T>(singleton);
+      return new AllDataIterator<>(singleton);
     }
 
     // iterate over the index fields, if one set return that
     for (FieldDescriptor index : indexes) {
       if (builder.hasField(index)) {
-        List<T> result = Lists.newArrayList();
+        List<T> result = new ArrayList<>();
         for (Entry<String, T> entry : urnMap.entrySet()) {
           if (builder.getField(index).equals(entry.getValue().getField(index))) {
             result.add(entry.getValue());
           }
         }
-        return new AllDataIterator<T>(result);
+        return new AllDataIterator<>(result);
       }
     }
 
     // return all data
-    List<T> result = Lists.newArrayList();
-    result.addAll(urnMap.values());
-    return new AllDataIterator<T>(result);
+    List<T> result = new ArrayList<>(urnMap.values());
+    return new AllDataIterator<>(result);
   }
 
   @Override

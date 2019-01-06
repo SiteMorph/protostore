@@ -11,5 +11,5 @@ public enum SortOrder {
 
   ASCENDING,
 
-  DESCENDING
+  direction, DESCENDING
 }

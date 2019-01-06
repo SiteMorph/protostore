@@ -1,18 +1,17 @@
 package net.sitemorph.protostore;
 
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Message;
 
 import java.sql.Connection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 /**
- * An automatically named Urn store factory that offers automatic named storage
- * for a collection of protobuf messages.
+ * A store that uses predefined naming conventions to bind proto to storage.
  *
  * It uses:
  *
@@ -33,7 +32,7 @@ public class AutoNamedUrnStoreFactory implements SqlNamedStoreFactory {
   private Map<String, SortOrder> sortFields;
 
   private Connection connection;
-  private Map<String, CrudStore<? extends Message>> stores = Maps.newHashMap();
+  private Map<String, CrudStore<? extends Message>> stores = new HashMap<>();
 
   private AutoNamedUrnStoreFactory() {}
 
@@ -88,8 +87,8 @@ public class AutoNamedUrnStoreFactory implements SqlNamedStoreFactory {
 
     private Builder() {
       result = new AutoNamedUrnStoreFactory();
-      result.indexFields = Sets.newHashSet();
-      result.sortFields = Maps.newHashMap();
+      result.indexFields = new HashSet<>();
+      result.sortFields = new HashMap<>();
     }
 
     public Builder registerSortField(String sortField, SortOrder order) {

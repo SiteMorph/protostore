@@ -1,7 +1,5 @@
 package net.sitemorph.protostore;
 
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Message;
@@ -9,6 +7,8 @@ import com.google.protobuf.Message;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -57,7 +57,7 @@ public class DbUrnFieldStore<T extends Message> implements CrudStore<T> {
   private FieldDescriptor vectorField;
 
   private DbUrnFieldStore() {
-    readIndexes = Maps.newHashMap();
+    readIndexes = new HashMap<>();
   }
 
   /**
@@ -221,7 +221,7 @@ public class DbUrnFieldStore<T extends Message> implements CrudStore<T> {
   public static class Builder<F extends Message> {
 
     private DbUrnFieldStore<F> result;
-    private Set<String> indexes = Sets.newHashSet();
+    private Set<String> indexes = new HashSet<>();
 
     public Builder() {
       result = new DbUrnFieldStore<F>();

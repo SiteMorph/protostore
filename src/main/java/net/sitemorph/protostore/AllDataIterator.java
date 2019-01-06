@@ -1,7 +1,7 @@
 package net.sitemorph.protostore;
 
+import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 
 /**
  * Iterate over all fields in the data set. Just wrap up a regular iterator.
@@ -12,7 +12,7 @@ public class AllDataIterator<T> implements CrudIterator<T> {
 
   private final Iterator<T> iterator;
 
-  public AllDataIterator(List<T> data) {
+  public AllDataIterator(Collection<T> data) {
     this.iterator = data.iterator();
   }
 

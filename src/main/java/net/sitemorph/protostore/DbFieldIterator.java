@@ -1,6 +1,5 @@
 package net.sitemorph.protostore;
 
-import com.google.common.collect.Sets;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.Descriptors.EnumValueDescriptor;
@@ -9,6 +8,7 @@ import com.google.protobuf.Message;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -38,7 +38,7 @@ public class DbFieldIterator<T extends Message> implements CrudIterator<T> {
       FieldDescriptor... skip) {
     StringBuilder result = new StringBuilder();
     List<FieldDescriptor> fields = descriptor.getFields();
-    Set<FieldDescriptor> skipSet = Sets.newHashSet();
+    Set<FieldDescriptor> skipSet = new HashSet<>();
     for (int i = 0; null != skip && i < skip.length; i++) {
       skipSet.add(skip[i]);
     }

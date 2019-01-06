@@ -1,11 +1,11 @@
 package net.sitemorph.protostore;
 
-import com.google.common.collect.Lists;
 import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor.Type;
 import com.google.protobuf.Message;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
@@ -44,8 +44,8 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
 
   private static final long INITIAL_VECTOR = 0;
   private FieldDescriptor urnField;
-  private List<FieldDescriptor> indexes = Lists.newArrayList();
-  private List<T> data = Lists.newArrayList();
+  private List<FieldDescriptor> indexes = new ArrayList<>();
+  private List<T> data = new ArrayList<>();
   private Descriptor descriptor;
   private FieldDescriptor sortField = null;
   private SortOrder direction = SortOrder.ASCENDING;
@@ -93,18 +93,18 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
   public synchronized  CrudIterator<T> read(Message.Builder builder) throws CrudException {
     if (builder.hasField(urnField)) {
       // read based on the urn field
-      return new FilteringDataIterator<T>(Lists.newArrayList(data), urnField,
+      return new FilteringDataIterator<T>(new ArrayList<>(data), urnField,
           builder.getField(urnField));
     }
     // iterate over the index fields
     for (FieldDescriptor field : indexes) {
       if (builder.hasField(field)) {
-        return new FilteringDataIterator<T>(Lists.newArrayList(data), field,
+        return new FilteringDataIterator<T>(new ArrayList<>(data), field,
             builder.getField(field));
       }
     }
     // read all data
-    return new AllDataIterator<T>(Lists.newArrayList(data));
+    return new AllDataIterator<T>(new ArrayList<>(data));
   }
 
   /**

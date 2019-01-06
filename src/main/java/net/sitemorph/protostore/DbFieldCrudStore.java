@@ -1,20 +1,18 @@
 package net.sitemorph.protostore;
 
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Message;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -23,13 +21,10 @@ import java.util.Set;
  * Implementation of a store based on database column fields. This assumes that
  * the table uses an auto ID based keying system for generating IDs on insert.
  *
- * TODO(dka) Impelement statement update test and set for update and delete
- *
  * @author damien@sitemorph.net
  */
 public class DbFieldCrudStore<T extends Message> implements CrudStore<T> {
 
-  private static Logger log = LoggerFactory.getLogger(DbFieldCrudStore.class);
   private Connection connection;
   private PreparedStatement create;
   private PreparedStatement read;
@@ -237,7 +232,7 @@ public class DbFieldCrudStore<T extends Message> implements CrudStore<T> {
   public static class Builder<F extends Message> {
 
     private DbFieldCrudStore<F> result;
-    private Set<String> indexes = Sets.newHashSet();
+    private Set<String> indexes = new HashSet<>();
 
     public Builder() {
       result = new DbFieldCrudStore<F>();
@@ -299,7 +294,7 @@ public class DbFieldCrudStore<T extends Message> implements CrudStore<T> {
       }
 
       // READ
-      result.readIndexes = Maps.newHashMap();
+      result.readIndexes = new HashMap<>();
       try {
         // add extra indexes
         for (FieldDescriptor field : fields) {
