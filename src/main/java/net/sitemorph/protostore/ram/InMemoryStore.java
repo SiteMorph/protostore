@@ -185,7 +185,7 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
     data.clear();
   }
 
-  private static void updateVector(Message.Builder builder,
+  public static void updateVector(Message.Builder builder,
       FieldDescriptor vectorField) {
     Object current = builder.getField(vectorField);
     if (null == current) {
@@ -203,7 +203,7 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
     builder.setField(vectorField, value);
   }
 
-  private static void setInitialVector(Message.Builder builder,
+  public static void setInitialVector(Message.Builder builder,
       FieldDescriptor vectorField) {
     builder.setField(vectorField, INITIAL_VECTOR);
   }

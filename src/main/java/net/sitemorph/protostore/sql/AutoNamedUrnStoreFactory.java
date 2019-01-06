@@ -1,9 +1,9 @@
 package net.sitemorph.protostore.sql;
 
 import net.sitemorph.protostore.CrudException;
+import net.sitemorph.protostore.CrudFactory;
 import net.sitemorph.protostore.CrudStore;
 import net.sitemorph.protostore.SortOrder;
-import net.sitemorph.protostore.SqlNamedStoreFactory;
 
 import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
@@ -27,7 +27,7 @@ import java.util.Set;
  *
  * @author damien@sitemorph.net
  */
-public class AutoNamedUrnStoreFactory implements SqlNamedStoreFactory {
+public class AutoNamedUrnStoreFactory implements CrudFactory {
 
   private static final String URN_FIELD = "urn";
   private static final String VECTOR = "vector";
@@ -41,13 +41,8 @@ public class AutoNamedUrnStoreFactory implements SqlNamedStoreFactory {
 
   private AutoNamedUrnStoreFactory() {}
 
-  public static Builder newBuilder() {
-    return new Builder();
-  }
-
-  @Override
-  public void setConnection(Connection connection) {
-    this.connection = connection;
+  public static Builder newBuilder(Connection connection) {
+    return new Builder(connection);
   }
 
   @Override
@@ -90,8 +85,9 @@ public class AutoNamedUrnStoreFactory implements SqlNamedStoreFactory {
 
     private AutoNamedUrnStoreFactory result;
 
-    private Builder() {
+    private Builder(Connection connection) {
       result = new AutoNamedUrnStoreFactory();
+      result.connection = connection;
       result.indexFields = new HashSet<>();
       result.sortFields = new HashMap<>();
     }

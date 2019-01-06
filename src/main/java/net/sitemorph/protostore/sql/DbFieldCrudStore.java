@@ -41,7 +41,7 @@ public class DbFieldCrudStore<T extends Message> implements CrudStore<T> {
   private PreparedStatement delete;
   private String tableName;
   private String autoIdColumn;
-  private Message.Builder builderProtype;
+  private T.Builder builderProtype;
   private FieldDescriptor idDescriptor;
   private ColumnType idType;
   private Map<FieldDescriptor, PreparedStatement> readIndexes;
@@ -75,7 +75,7 @@ public class DbFieldCrudStore<T extends Message> implements CrudStore<T> {
 
   @SuppressWarnings("unchecked")
   @Override
-  public T create(Message.Builder builder) throws CrudException {
+  public T create(T.Builder builder) throws CrudException {
     try {
       Descriptor descriptor = builder.getDescriptorForType();
       List<FieldDescriptor> fields = descriptor.getFields();
@@ -123,7 +123,7 @@ public class DbFieldCrudStore<T extends Message> implements CrudStore<T> {
    * @throws CrudException when there is an underlying storage error.
    */
   @Override
-  public CrudIterator<T> readAll(Message.Builder builder) throws CrudException {
+  public CrudIterator<T> readAll(T.Builder builder) throws CrudException {
     try {
       if (builder.hasField(idDescriptor)) {
         Object value = builder.getField(idDescriptor);
@@ -150,9 +150,21 @@ public class DbFieldCrudStore<T extends Message> implements CrudStore<T> {
     }
   }
 
+  @Override
+  public T read(T.Builder prototype) throws CrudException {
+    CrudIterator<T> items = readAll(prototype);
+    if (!items.hasNext()) {
+      items.close();
+      throw new MessageNotFoundException("Message not found: " + prototype.toString());
+    }
+    T result = items.next();
+    items.close();;
+    return result;
+  }
+
   @SuppressWarnings("unchecked")
   @Override
-  public T update(Message.Builder builder) throws CrudException {
+  public T update(T.Builder builder) throws CrudException {
     if (!builder.hasField(idDescriptor)) {
       throw new CrudException("Can't update message due to missing ID");
     }
@@ -160,7 +172,7 @@ public class DbFieldCrudStore<T extends Message> implements CrudStore<T> {
       if (!builder.hasField(vectorField)) {
         throw new MessageVectorException("Update is missing clock vector");
       }
-      CrudIterator<T> priors = read(builder);
+      CrudIterator<T> priors = readAll(builder);
       if (!priors.hasNext()) {
         priors.close();
         throw new CrudException("Update attempted for unknown message: " +
@@ -210,7 +222,7 @@ public class DbFieldCrudStore<T extends Message> implements CrudStore<T> {
       if (!message.hasField(vectorField)) {
         throw new MessageVectorException("Delete is missing clock vector");
       }
-      CrudIterator<T> priors = read(message.toBuilder());
+      CrudIterator<T> priors = readAll(message.toBuilder());
       if (!priors.hasNext()) {
         priors.close();
         throw new CrudException("Delete attempted for unknown message: " +

@@ -3,9 +3,10 @@ package net.sitemorph.protostore.sql;
 import net.sitemorph.protostore.CrudException;
 import net.sitemorph.protostore.CrudIterator;
 import net.sitemorph.protostore.CrudStore;
-import net.sitemorph.protostore.ram.InMemoryStore;
+import net.sitemorph.protostore.MessageNotFoundException;
 import net.sitemorph.protostore.MessageVectorException;
 import net.sitemorph.protostore.SortOrder;
+import net.sitemorph.protostore.ram.InMemoryStore;
 
 import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
@@ -72,19 +73,19 @@ public class DbUrnFieldStore<T extends Message> implements CrudStore<T> {
    *
    * @param builder to build from
    * @return the constructed object with urn set.
-   * @throws CrudException
+   * @throws CrudException upon storage error
    */
   @Override
-  public T create(Message.Builder builder) throws CrudException {
+  public T create(T.Builder builder) throws CrudException {
     try {
       // set the uuid
       UUID uid = UUID.randomUUID();
-      CrudIterator<T> prior = read(prototype.clone()
+      CrudIterator<T> prior = readAll(prototype.clone()
           .setField(urnField, uid.toString()));
       while (prior.hasNext()) {
         prior.close();
         uid = UUID.randomUUID();
-        prior = read(prototype.clone()
+        prior = readAll(prototype.clone()
             .setField(urnField, uid.toString()));
       }
       prior.close();
@@ -101,6 +102,7 @@ public class DbUrnFieldStore<T extends Message> implements CrudStore<T> {
             builder.hasField(field)? builder.getField(field) : null);
       }
       create.executeUpdate();
+      //noinspection unchecked
       return (T) builder.build();
     } catch (SQLException e) {
       throw new CrudException("Error creating new urn crud object", e);
@@ -115,14 +117,14 @@ public class DbUrnFieldStore<T extends Message> implements CrudStore<T> {
    *
    * @param builder with either urn or secondary index set.
    * @return iterator over results.
-   * @throws CrudException
+   * @throws CrudException upon storage error reading
    */
   @Override
-  public CrudIterator<T> read(Message.Builder builder) throws CrudException {
+  public CrudIterator<T> readAll(Message.Builder builder) throws CrudException {
     try {
       if (builder.hasField(urnField)) {
         readUrn.setString(1, builder.getField(urnField).toString());
-        return new DbFieldIterator<T>(builder, readUrn.executeQuery());
+        return new DbFieldIterator<>(builder, readUrn.executeQuery());
       }
 
       for (Map.Entry<FieldDescriptor, PreparedStatement> index :
@@ -132,15 +134,28 @@ public class DbUrnFieldStore<T extends Message> implements CrudStore<T> {
         if (builder.hasField(field)) {
           Object value = builder.getField(field);
           setStatementValue(statement, 1, field, value);
-          return new DbFieldIterator<T>(builder, statement.executeQuery());
+          return new DbFieldIterator<>(builder, statement.executeQuery());
         }
       }
 
-      return new DbFieldIterator<T>(builder, readAll.executeQuery());
+      return new DbFieldIterator<>(builder, readAll.executeQuery());
     } catch (SQLException e) {
       throw new CrudException("Error reading urn fields records.", e);
     }
   }
+
+  @Override
+  public T read(Message.Builder prototype) throws CrudException {
+    CrudIterator<T> items = readAll(prototype);
+    if (!items.hasNext()) {
+      items.close();
+      throw new MessageNotFoundException("Message not found: " + prototype.toString());
+    }
+    T result = items.next();
+    items.close();
+    return result;
+  }
+
 
   @Override
   public T update(Message.Builder builder) throws CrudException {
@@ -159,7 +174,7 @@ public class DbUrnFieldStore<T extends Message> implements CrudStore<T> {
           // skip the urn field as it is set in the where
           continue;
         }
-        if (null != vectorField && field.equals(vectorField)) {
+        if (field.equals(vectorField)) {
           // update the vector
           vector = (Long) builder.getField(vectorField);
           InMemoryStore.updateVector(builder, vectorField);
@@ -181,6 +196,7 @@ public class DbUrnFieldStore<T extends Message> implements CrudStore<T> {
             builder.getField(urnField) + " not updated to to vector mismatch");
 
       }
+      //noinspection unchecked
       return (T) builder.build();
     } catch (SQLException e) {
       throw new CrudException("Error updating urn crud value", e);
@@ -231,7 +247,7 @@ public class DbUrnFieldStore<T extends Message> implements CrudStore<T> {
     private Set<String> indexes = new HashSet<>();
 
     public Builder() {
-      result = new DbUrnFieldStore<F>();
+      result = new DbUrnFieldStore<>();
     }
 
     public DbUrnFieldStore<F> build() throws CrudException {
