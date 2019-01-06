@@ -8,7 +8,6 @@ import net.sitemorph.protostore.MessageNotFoundException;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Message;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -156,7 +155,7 @@ public class PreloadUrnCrudStore<T extends Message> implements CrudStore<T> {
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() throws CrudException {
     urnMap.clear();
     urnMap = null;
     writeStore.close();

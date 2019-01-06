@@ -1,15 +1,14 @@
 package net.sitemorph.protostore;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
-
-
 import net.sitemorph.protostore.helper.PreloadUrnCrudStore;
 import net.sitemorph.protostore.ram.InMemoryStore;
 import net.sitemorph.queue.Tasks.Task;
 
 import org.testng.annotations.Test;
+
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
 
 
 /**
@@ -37,7 +36,7 @@ public class PreloadUrnCrudStoreTest {
         .addIndexField("path")
         .setWriteStore(memoryStore)
         .build();
-    CrudIterator<Task> tasks = cacheStore.read(Task.newBuilder());
+    CrudIterator<Task> tasks = cacheStore.readAll(Task.newBuilder());
     assertTrue(tasks.hasNext(), "tasks should have a next item");
     assertEquals(expect, tasks.next(), "Expected the generated test");
     assertFalse(tasks.hasNext(), "Didn't expect any more tasks");
@@ -64,7 +63,7 @@ public class PreloadUrnCrudStoreTest {
         .addIndexField("path")
         .setWriteStore(memoryStore)
         .build();
-    CrudIterator<Task> tasks = cacheStore.read(Task.newBuilder()
+    CrudIterator<Task> tasks = cacheStore.readAll(Task.newBuilder()
         .setPath("/home"));
     assertTrue(tasks.hasNext(), "Expected to have a result");
     assertEquals(expect, tasks.next(), "Expected home task");

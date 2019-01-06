@@ -1,3 +1,4 @@
+syntax = "proto3";
 package net.sitemorph.queue;
 
 // Proto representation of account information and admin details of accounts
@@ -8,16 +9,16 @@ option java_outer_classname = "Tasks";
 
 message Task {
   // The urn is the item identifier
-  required string urn = 1;
+  string urn = 1;
   // The path is the queue name using slash notation
-  required string path = 2;
+  string path = 2;
   // The timestamp is used to order queue items
-  required int64 runTime = 3;
+  int64 runTime = 3;
   // The data associated with the queue item
-  optional string data = 4;
+  string data = 4;
   // The vector field which is updated by the protostore on update
-  required int64 vector = 5;
+  int64 vector = 5;
   // The claim used in connection with the vector to claim tasks
-  optional string claim = 6;
-  optional int64 claimTimeout = 7;
+  string claim = 6;
+  int64 claimTimeout = 7;
 }
