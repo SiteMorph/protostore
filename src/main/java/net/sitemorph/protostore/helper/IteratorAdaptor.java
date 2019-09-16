@@ -55,4 +55,6 @@ public class IteratorAdaptor<T extends Message> implements Iterator<T>, Closeabl
   public void close() throws CrudException {
     iterator.close();
   }
+
+  
 }

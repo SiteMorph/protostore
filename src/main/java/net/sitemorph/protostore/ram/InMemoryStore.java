@@ -99,7 +99,7 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
   }
 
   @Override
-  public synchronized  CrudIterator<T> readAll(Message.Builder builder) throws CrudException {
+  public synchronized  CrudIterator<T> read(Message.Builder builder) throws CrudException {
     if (builder.hasField(urnField)) {
       // read based on the urn field
       return new FilteringDataIterator<T>(new ArrayList<>(data), urnField,
@@ -117,8 +117,8 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
   }
 
   @Override
-  public T read(T.Builder prototype) throws CrudException {
-    CrudIterator<T> items = readAll(prototype);
+  public T readOne(T.Builder prototype) throws CrudException {
+    CrudIterator<T> items = read(prototype);
     if (!items.hasNext()) {
       items.close();
       throw new MessageNotFoundException("Message not found: " + prototype.toString());
@@ -181,8 +181,6 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
 
   @Override
   public void close() throws CrudException {
-    // free memory on close
-    data.clear();
   }
 
   public static void updateVector(Message.Builder builder,

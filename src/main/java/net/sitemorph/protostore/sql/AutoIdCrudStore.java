@@ -123,7 +123,7 @@ public class AutoIdCrudStore<T extends Message> implements CrudStore<T> {
    * @throws CrudException when there is an underlying storage error.
    */
   @Override
-  public CrudIterator<T> readAll(T.Builder builder) throws CrudException {
+  public CrudIterator<T> read(T.Builder builder) throws CrudException {
     try {
       if (builder.hasField(idDescriptor)) {
         Object value = builder.getField(idDescriptor);
@@ -151,8 +151,8 @@ public class AutoIdCrudStore<T extends Message> implements CrudStore<T> {
   }
 
   @Override
-  public T read(T.Builder prototype) throws CrudException {
-    CrudIterator<T> items = readAll(prototype);
+  public T readOne(T.Builder prototype) throws CrudException {
+    CrudIterator<T> items = read(prototype);
     if (!items.hasNext()) {
       items.close();
       throw new MessageNotFoundException("Message not found: " + prototype.toString());
@@ -172,7 +172,7 @@ public class AutoIdCrudStore<T extends Message> implements CrudStore<T> {
       if (!builder.hasField(vectorField)) {
         throw new MessageVectorException("Update is missing clock vector");
       }
-      CrudIterator<T> priors = readAll(builder);
+      CrudIterator<T> priors = read(builder);
       if (!priors.hasNext()) {
         priors.close();
         throw new CrudException("Update attempted for unknown message: " +
@@ -222,7 +222,7 @@ public class AutoIdCrudStore<T extends Message> implements CrudStore<T> {
       if (!message.hasField(vectorField)) {
         throw new MessageVectorException("Delete is missing clock vector");
       }
-      CrudIterator<T> priors = readAll(message.toBuilder());
+      CrudIterator<T> priors = read(message.toBuilder());
       if (!priors.hasNext()) {
         priors.close();
         throw new CrudException("Delete attempted for unknown message: " +

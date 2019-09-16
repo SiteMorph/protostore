@@ -77,7 +77,7 @@ public class PreloadUrnCrudStore<T extends Message> implements CrudStore<T> {
         throw new CrudException("Could not locate urn field: " + urnField);
       }
 
-      CrudIterator<M> priors = writeStore.readAll(prototype);
+      CrudIterator<M> priors = writeStore.read(prototype);
       while (priors.hasNext()) {
         M prior = priors.next();
         String urn = String.valueOf(prior.getField(result.urnDescriptor));
@@ -97,7 +97,7 @@ public class PreloadUrnCrudStore<T extends Message> implements CrudStore<T> {
   }
 
   @Override
-  public CrudIterator<T> readAll(T.Builder builder) throws CrudException {
+  public CrudIterator<T> read(T.Builder builder) throws CrudException {
     // urn first
     if (builder.hasField(urnDescriptor)) {
       String urn = String.valueOf(builder.getField(urnDescriptor));
@@ -128,8 +128,8 @@ public class PreloadUrnCrudStore<T extends Message> implements CrudStore<T> {
   }
 
   @Override
-  public T read(Message.Builder prototype) throws CrudException {
-    CrudIterator<T> items = readAll(prototype);
+  public T readOne(Message.Builder prototype) throws CrudException {
+    CrudIterator<T> items = read(prototype);
     if (!items.hasNext()) {
       items.close();
       throw new MessageNotFoundException("Resource not found for: " + prototype.toString());

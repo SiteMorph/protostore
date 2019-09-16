@@ -67,12 +67,12 @@ public class UrnCrudStore<T extends Message> implements CrudStore<T> {
     try {
       // set the uuid
       UUID uid = UUID.randomUUID();
-      CrudIterator<T> prior = readAll(prototype.clone()
+      CrudIterator<T> prior = read(prototype.clone()
           .setField(urnField, uid.toString()));
       while (prior.hasNext()) {
         prior.close();
         uid = UUID.randomUUID();
-        prior = readAll(prototype.clone()
+        prior = read(prototype.clone()
             .setField(urnField, uid.toString()));
       }
       prior.close();
@@ -107,7 +107,7 @@ public class UrnCrudStore<T extends Message> implements CrudStore<T> {
    * @throws CrudException upon storage error reading
    */
   @Override
-  public CrudIterator<T> readAll(Message.Builder builder) throws CrudException {
+  public CrudIterator<T> read(Message.Builder builder) throws CrudException {
     try {
       if (builder.hasField(urnField)) {
         readUrn.setString(1, builder.getField(urnField).toString());
@@ -132,8 +132,8 @@ public class UrnCrudStore<T extends Message> implements CrudStore<T> {
   }
 
   @Override
-  public T read(Message.Builder prototype) throws CrudException {
-    CrudIterator<T> items = readAll(prototype);
+  public T readOne(Message.Builder prototype) throws CrudException {
+    CrudIterator<T> items = read(prototype);
     if (!items.hasNext()) {
       items.close();
       throw new MessageNotFoundException("Message not found: " + prototype.toString());

@@ -37,7 +37,7 @@ public interface CrudStore<T extends Message> extends Closeable {
    * @param prototype for the selection of messages
    * @return iterator over representation messages.
    */
-  public CrudIterator<T> readAll(T.Builder prototype) throws CrudException;
+  public CrudIterator<T> read(T.Builder prototype) throws CrudException;
 
   /**
    * Read a single message based on a prototype of the message. This method is a
@@ -48,7 +48,7 @@ public interface CrudStore<T extends Message> extends Closeable {
    * @return matching message
    * @throws MessageNotFoundException if no matching record is in the store.
    */
-  public T read(T.Builder prototype) throws CrudException;
+  public T readOne(T.Builder prototype) throws CrudException;
 
   /**
    * Update a representation given a builder update. This method relies on

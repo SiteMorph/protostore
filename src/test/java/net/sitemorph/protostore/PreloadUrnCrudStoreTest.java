@@ -36,7 +36,7 @@ public class PreloadUrnCrudStoreTest {
         .addIndexField("path")
         .setWriteStore(memoryStore)
         .build();
-    CrudIterator<Task> tasks = cacheStore.readAll(Task.newBuilder());
+    CrudIterator<Task> tasks = cacheStore.read(Task.newBuilder());
     assertTrue(tasks.hasNext(), "tasks should have a next item");
     assertEquals(expect, tasks.next(), "Expected the generated test");
     assertFalse(tasks.hasNext(), "Didn't expect any more tasks");
@@ -63,7 +63,7 @@ public class PreloadUrnCrudStoreTest {
         .addIndexField("path")
         .setWriteStore(memoryStore)
         .build();
-    CrudIterator<Task> tasks = cacheStore.readAll(Task.newBuilder()
+    CrudIterator<Task> tasks = cacheStore.read(Task.newBuilder()
         .setPath("/home"));
     assertTrue(tasks.hasNext(), "Expected to have a result");
     assertEquals(expect, tasks.next(), "Expected home task");
