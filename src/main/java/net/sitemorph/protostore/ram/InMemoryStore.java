@@ -53,8 +53,8 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
 
   private static final long INITIAL_VECTOR = 0;
   private FieldDescriptor urnField;
-  private List<FieldDescriptor> indexes = new ArrayList<>();
-  private List<T> data = new ArrayList<>();
+  private final List<FieldDescriptor> indexes = new ArrayList<>();
+  private final List<T> data = new ArrayList<>();
   private Descriptor descriptor;
   private FieldDescriptor sortField = null;
   private SortOrder direction = SortOrder.ASCENDING;
@@ -68,11 +68,11 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
     // find a urn for the new object
     UUID urn = UUID.randomUUID();
 
-    CrudIterator<T> priors = new FilteringDataIterator<T>(data, urnField,
+    CrudIterator<T> priors = new FilteringDataIterator<>(data, urnField,
         urn);
     while (priors.hasNext()) {
       urn = UUID.randomUUID();
-      priors = new FilteringDataIterator<T>(data, urnField, urn);
+      priors = new FilteringDataIterator<>(data, urnField, urn);
     }
     builder.setField(urnField, urn.toString());
     if (null != vectorField) {
@@ -99,21 +99,21 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
   }
 
   @Override
-  public synchronized  CrudIterator<T> read(Message.Builder builder) throws CrudException {
+  public synchronized  CrudIterator<T> read(Message.Builder builder) {
     if (builder.hasField(urnField)) {
       // read based on the urn field
-      return new FilteringDataIterator<T>(new ArrayList<>(data), urnField,
+      return new FilteringDataIterator<>(new ArrayList<>(data), urnField,
           builder.getField(urnField));
     }
     // iterate over the index fields
     for (FieldDescriptor field : indexes) {
       if (builder.hasField(field)) {
-        return new FilteringDataIterator<T>(new ArrayList<>(data), field,
+        return new FilteringDataIterator<>(new ArrayList<>(data), field,
             builder.getField(field));
       }
     }
     // read all data
-    return new CollectionIterator<T>(new ArrayList<>(data));
+    return new CollectionIterator<>(new ArrayList<>(data));
   }
 
   @Override
@@ -180,7 +180,7 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
   }
 
   @Override
-  public void close() throws CrudException {
+  public void close() {
   }
 
   public static void updateVector(Message.Builder builder,
@@ -192,7 +192,7 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
     if (!(current instanceof Long)) {
       throw new RuntimeException("Message clock vector data type error");
     }
-    Long value = (Long)current;
+    long value = (Long)current;
     if (value == Long.MAX_VALUE) {
       value = INITIAL_VECTOR;
     } else {
@@ -208,7 +208,7 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
 
   public static class  Builder<M extends Message> {
 
-    private InMemoryStore<M> result;
+    private final InMemoryStore<M> result;
     private Message.Builder prototype;
     private static final EnumSet<Type> INTEGRALS = EnumSet.of(
         Type.INT64,
@@ -218,7 +218,7 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
         Type.SINT64);
 
     public Builder() {
-      result = new InMemoryStore<M>();
+      result = new InMemoryStore<>();
     }
 
     public Builder<M> setPrototype(Message.Builder prototype) {

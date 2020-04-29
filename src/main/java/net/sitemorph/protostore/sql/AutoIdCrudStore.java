@@ -41,7 +41,7 @@ public class AutoIdCrudStore<T extends Message> implements CrudStore<T> {
   private PreparedStatement delete;
   private String tableName;
   private String autoIdColumn;
-  private T.Builder builderProtype;
+  private T.Builder builderPrototype;
   private FieldDescriptor idDescriptor;
   private ColumnType idType;
   private Map<FieldDescriptor, PreparedStatement> readIndexes;
@@ -68,7 +68,7 @@ public class AutoIdCrudStore<T extends Message> implements CrudStore<T> {
         index.getValue().close();
       }
     } catch (SQLException e) {
-      throw new CrudException("Error closing underly prepared statements", e);
+      throw new CrudException("Error closing under prepared statements", e);
     }
   }
 
@@ -128,10 +128,10 @@ public class AutoIdCrudStore<T extends Message> implements CrudStore<T> {
       if (builder.hasField(idDescriptor)) {
         Object value = builder.getField(idDescriptor);
         setStatementValue(read, 1, idDescriptor, value);
-        return new DbFieldIterator<T>(builder, read.executeQuery());
+        return new DbFieldIterator<>(builder, read.executeQuery());
       }
       if (null == readIndexes) {
-        return new DbFieldIterator<T>(builder, readAll.executeQuery());
+        return new DbFieldIterator<>(builder, readAll.executeQuery());
       }
 
       for (Map.Entry<FieldDescriptor, PreparedStatement> entry : readIndexes.entrySet()) {
@@ -140,11 +140,11 @@ public class AutoIdCrudStore<T extends Message> implements CrudStore<T> {
         if (builder.hasField(field)) {
           Object value = builder.getField(entry.getKey());
           setStatementValue(statement, 1, field, value);
-          return new DbFieldIterator<T>(builder, statement.executeQuery());
+          return new DbFieldIterator<>(builder, statement.executeQuery());
         }
       }
       // no index value set so return all results
-      return new DbFieldIterator<T>(builder, readAll.executeQuery());
+      return new DbFieldIterator<>(builder, readAll.executeQuery());
     } catch (SQLException e) {
       throw new CrudException("Error reading value caused by SQL exception", e);
     }
@@ -158,7 +158,7 @@ public class AutoIdCrudStore<T extends Message> implements CrudStore<T> {
       throw new MessageNotFoundException("Message not found: " + prototype.toString());
     }
     T result = items.next();
-    items.close();;
+    items.close();
     return result;
   }
 
@@ -251,11 +251,11 @@ public class AutoIdCrudStore<T extends Message> implements CrudStore<T> {
 
   public static class Builder<F extends Message> {
 
-    private AutoIdCrudStore<F> result;
-    private Set<String> indexes = new HashSet<>();
+    private final AutoIdCrudStore<F> result;
+    private final Set<String> indexes = new HashSet<>();
 
     public Builder() {
-      result = new AutoIdCrudStore<F>();
+      result = new AutoIdCrudStore<>();
     }
 
     public AutoIdCrudStore<F> build() throws CrudException {
@@ -263,7 +263,7 @@ public class AutoIdCrudStore<T extends Message> implements CrudStore<T> {
       if (null == result.autoIdColumn) {
         throw new CrudException("Required field auto ID column missing");
       }
-      Descriptor descriptor = result.builderProtype.getDescriptorForType();
+      Descriptor descriptor = result.builderPrototype.getDescriptorForType();
       List<FieldDescriptor> fields = descriptor.getFields();
       for (FieldDescriptor field : fields) {
         if (field.getName().equals(result.autoIdColumn)) {
@@ -386,11 +386,11 @@ public class AutoIdCrudStore<T extends Message> implements CrudStore<T> {
     }
 
     public Builder<F> setVectorField(String fieldName) {
-      if (null == result.builderProtype) {
+      if (null == result.builderPrototype) {
         throw new IllegalStateException("Can't set vector field as no " +
             "prototype has been set");
       }
-      Descriptor descriptor = result.builderProtype.getDescriptorForType();
+      Descriptor descriptor = result.builderPrototype.getDescriptorForType();
       for (FieldDescriptor field : descriptor.getFields()) {
         if (field.getName().equals(fieldName)) {
           result.vectorField = field;
@@ -402,7 +402,7 @@ public class AutoIdCrudStore<T extends Message> implements CrudStore<T> {
     }
 
     public Builder<F> setBuilderPrototype(Message.Builder builderPrototype) {
-      result.builderProtype = builderPrototype;
+      result.builderPrototype = builderPrototype;
       return this;
     }
 
