@@ -2,6 +2,7 @@ package net.sitemorph.protostore.sql;
 
 import net.sitemorph.protostore.CrudException;
 import net.sitemorph.protostore.CrudIterator;
+import net.sitemorph.protostore.MessageNotFoundException;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Descriptors.Descriptor;
@@ -30,6 +31,8 @@ public class DbFieldIterator<T extends Message> implements CrudIterator<T> {
 
   private final ResultSet resultSet;
   private Message.Builder prototype;
+  private boolean readAhead = false;
+  private boolean hasNext = false;
 
   public DbFieldIterator(T.Builder builder, ResultSet resultSet) {
     // nasty setup required
@@ -70,7 +73,14 @@ public class DbFieldIterator<T extends Message> implements CrudIterator<T> {
   public T next() throws CrudException {
     Message.Builder next = prototype.clone();
     try {
-      resultSet.next();
+      if (!readAhead) {
+        hasNext = resultSet.next();
+      } else {
+          readAhead = false;
+      }
+      if (!hasNext) {
+        throw new MessageNotFoundException("Called next when no more records");
+      }
       Descriptor descriptor = prototype.getDescriptorForType();
       int offset = 1;
       for (FieldDescriptor field : descriptor.getFields()) {
@@ -132,6 +142,7 @@ public class DbFieldIterator<T extends Message> implements CrudIterator<T> {
           next.setField(field, value);
         }
       }
+      readAhead = false;
       return (T) next.build();
     } catch (SQLException e) {
       throw new CrudException("Error reading proto field", e);
@@ -141,9 +152,11 @@ public class DbFieldIterator<T extends Message> implements CrudIterator<T> {
   @Override
   public boolean hasNext() throws CrudException {
     try {
-      boolean forward = resultSet.next();
-      resultSet.previous();
-      return forward;
+      if (!readAhead) {
+        hasNext = resultSet.next();
+        readAhead = true;
+      }
+      return hasNext;
     } catch (SQLException e) {
       throw new CrudException("Error checking for next crud object", e);
     }
