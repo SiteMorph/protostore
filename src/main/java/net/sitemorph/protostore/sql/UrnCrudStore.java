@@ -85,8 +85,7 @@ public class UrnCrudStore<T extends Message> implements CrudStore<T> {
       List<FieldDescriptor> fields = descriptor.getFields();
       int offset = 1;
       for (FieldDescriptor field : fields) {
-        setStatementValue(create, offset++, field,
-            builder.hasField(field)? builder.getField(field) : null);
+        setStatementValue(create, offset++, field,builder.getField(field));
       }
       create.executeUpdate();
       //noinspection unchecked
