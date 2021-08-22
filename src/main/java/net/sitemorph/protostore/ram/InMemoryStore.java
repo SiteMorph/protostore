@@ -147,7 +147,7 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
           }
           updateVector(builder, vectorField);
         }
-
+        //noinspection unchecked
         T result = (T) builder.build();
         data.set(i, result);
         // sort the data in case the update order changed
@@ -343,8 +343,10 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
               sortField.getName());
         }
         if (SortOrder.ASCENDING == direction) {
+          //noinspection unchecked
           return ((Comparable) leftValue).compareTo(rightValue);
         } else {
+          //noinspection unchecked
           return ((Comparable) rightValue).compareTo(leftValue);
         }
       }

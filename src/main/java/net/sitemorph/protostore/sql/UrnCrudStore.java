@@ -33,11 +33,6 @@ import static net.sitemorph.protostore.sql.AutoIdCrudStore.setStatementValue;
  *
  * @author damien@sitemorph.net
  *
- * TODO create an example on the github documentations
- * TODO consider making the name provider a factory
- *
- * TODO modify to use single statement vector update. Should not be used for
- * relaxed locking scenarios until resolved.
  */
 public class UrnCrudStore<T extends Message> implements CrudStore<T> {
 
