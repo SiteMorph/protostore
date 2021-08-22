@@ -115,9 +115,29 @@ Note that this project was a coding exercise to avoid writing legacy SQL and
 has had limited testing in large scale deployments. Before using in a production
 environment consider implementing unit tests and system tests.
 
+Build requirements dependency on protobuf 2.6.1
+------------------
+As most production environments have now moved to using Proto 3 this library now
+requires a custom install of protobuf-lib 2.6.1 compiler to be compatible.
+
+See https://github.com/protocolbuffers/protobuf/releases/tag/v2.6.1 for the
+source bundle.
+
+See https://github.com/protocolbuffers/protobuf/blob/master/src/README.md for
+build and install instructions.
+
 
 Change Log
 ----------
+
+6.0.0
+* Migrate to protobuf 2.6.1 the last supported version for protobuf 2.*.
+
+5.*
+* Migrated to proto3 however this introduced a number of issues with 'hasField'
+  support. While 3+ protobuf supports 'has' field semantics on builders it is
+  not backward compatible and actually tests for the default value which causes
+  issues with values like 0 indexed sort keys and vector clock versioning.
 
 4.7.0
 * Updated dependencies.

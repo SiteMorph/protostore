@@ -55,7 +55,6 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
   private FieldDescriptor urnField;
   private final List<FieldDescriptor> indexes = new ArrayList<>();
   private final List<T> data = new ArrayList<>();
-  private Descriptor descriptor;
   private FieldDescriptor sortField = null;
   private SortOrder direction = SortOrder.ASCENDING;
   private FieldDescriptor vectorField = null;
@@ -223,7 +222,6 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
 
     public Builder<M> setPrototype(Message.Builder prototype) {
       this.prototype = prototype;
-      result.descriptor = prototype.getDescriptorForType();
       return this;
     }
 
