@@ -1,13 +1,13 @@
 package net.sitemorph.protostore;
 
-import net.sitemorph.protostore.ram.InMemoryStore;
-import net.sitemorph.queue.Tasks.Task;
+import net.sitemorph.protostore.ram.*;
+import net.sitemorph.queue.Tasks.*;
+import org.testng.annotations.*;
+import org.testng.collections.*;
 
-import org.testng.annotations.Test;
+import java.util.*;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.*;
 
 public class InMemoryStoreTest {
 
@@ -16,13 +16,7 @@ public class InMemoryStoreTest {
 
   @Test
   public void testReadAll() throws CrudException {
-    CrudStore<Task> store = new InMemoryStore.Builder<Task>()
-        .setPrototype(Task.newBuilder())
-        .setUrnField("urn")
-        .addIndexField("path")
-        .setSortOrder("runTime", SortOrder.ASCENDING)
-        .setVectorField("vector")
-        .build();
+    CrudStore<Task> store = buildStore();
     store.create(Task.newBuilder()
         .setPath(TEST_PATH)
         .setRunTime(0));
@@ -40,13 +34,7 @@ public class InMemoryStoreTest {
 
   @Test
   public void testSecondaryIndex() throws CrudException {
-    CrudStore<Task> store = new InMemoryStore.Builder<Task>()
-        .setPrototype(Task.newBuilder())
-        .setUrnField("urn")
-        .addIndexField("path")
-        .setSortOrder("runTime", SortOrder.ASCENDING)
-        .setVectorField("vector")
-        .build();
+    CrudStore<Task> store = buildStore();
     store.create(Task.newBuilder()
       .setPath(HOME_PATH)
       .setRunTime(1));
@@ -64,5 +52,51 @@ public class InMemoryStoreTest {
       assertEquals(tasks.next().getPath(), HOME_PATH);
     }
     assertEquals(count, 2, "Expected two home paths");
+  }
+
+  @Test(expectedExceptions = MessageVectorException.class)
+  public void testVectorClockError() throws CrudException {
+    CrudStore<Task> store = buildStore();
+    Task prior = store.create(Task.newBuilder()
+      .setRunTime(0)
+      .setPath(TEST_PATH));
+    assertEquals(prior.getVector(), 0);
+    Task update = store.update(prior.toBuilder()
+      .setRunTime(7));
+    assertEquals(update.getVector(), 1);
+    store.update(prior.toBuilder()
+    .setRunTime(11));
+  }
+
+  @Test
+  public void testSortedResults() throws CrudException {
+    CrudStore<Task> store = buildStore();
+    store.create(Task.newBuilder()
+      .setPath(TEST_PATH)
+      .setRunTime(11));
+    store.create(Task.newBuilder()
+      .setRunTime(1)
+      .setPath(TEST_PATH));
+    store.create(Task.newBuilder()
+      .setRunTime(7)
+      .setPath(HOME_PATH));
+    CrudIterator<Task> tasks = store.read(Task.newBuilder());
+    List<Long> expected = Lists.newArrayList(1L, 7L, 11L);
+
+    for (Long expect: expected) {
+      assertEquals(Long.valueOf(tasks.next()
+        .getRunTime()), expect);
+    }
+    assertFalse(tasks.hasNext());
+  }
+
+  private CrudStore<Task> buildStore() {
+    return new InMemoryStore.Builder<Task>()
+        .setPrototype(Task.newBuilder())
+        .setUrnField("urn")
+        .addIndexField("path")
+        .setSortOrder("runTime", SortOrder.ASCENDING)
+        .setVectorField("vector")
+        .build();
   }
 }
