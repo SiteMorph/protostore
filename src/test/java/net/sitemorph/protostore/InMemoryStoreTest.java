@@ -33,6 +33,25 @@ public class InMemoryStoreTest {
   }
 
   @Test
+  public void testDefaultValueIndexIgnored() throws CrudException {
+    CrudStore<Task> store = buildStore();
+    store.create(Task.newBuilder()
+      .setPath("")
+      .setRunTime(0));
+    store.create(Task.newBuilder()
+      .setPath(TEST_PATH)
+      .setRunTime(1));
+    CrudIterator<Task> tasks = store.read(Task.newBuilder().setRunTime(0));
+    int count = 0;
+    while (tasks.hasNext()) {
+      count++;
+      tasks.next();
+    }
+    assertEquals(count, 2, "Expected just two task with zero default field");
+  }
+
+
+  @Test
   public void testSecondaryIndex() throws CrudException {
     CrudStore<Task> store = buildStore();
     store.create(Task.newBuilder()

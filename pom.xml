@@ -14,7 +14,7 @@
   <artifactId>protostore</artifactId>
   <packaging>jar</packaging>
   <name>SiteMorph protobuf persistence</name>
-  <version>6.0.1</version>
+  <version>6.0.2</version>
 
   <dependencies>
 
@@ -28,7 +28,7 @@
     <dependency>
       <groupId>com.google.protobuf</groupId>
       <artifactId>protobuf-java</artifactId>
-      <version>2.6.1</version>
+      <version>3.13.0</version>
     </dependency>
 
     <dependency>

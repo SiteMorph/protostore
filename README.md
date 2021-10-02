@@ -131,7 +131,7 @@ Change Log
 ----------
 
 6.0.0
-* Migrate to protobuf 2.6.1 the last supported version for protobuf 2.*.
+* Restructure the protostore changes to separate out storage engines.
 
 5.*
 * Migrated to proto3 however this introduced a number of issues with 'hasField'

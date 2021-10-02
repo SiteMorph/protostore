@@ -1,18 +1,19 @@
 package net.sitemorph.protostore.ram;
 
+import com.google.protobuf.Descriptors.Descriptor;
+import com.google.protobuf.Descriptors.FieldDescriptor;
+import com.google.protobuf.Descriptors.FieldDescriptor.Type;
+import com.google.protobuf.Message;
 import net.sitemorph.protostore.CrudException;
 import net.sitemorph.protostore.CrudIterator;
 import net.sitemorph.protostore.CrudStore;
+import net.sitemorph.protostore.CrudStream;
 import net.sitemorph.protostore.MessageNotFoundException;
 import net.sitemorph.protostore.MessageVectorException;
 import net.sitemorph.protostore.SortOrder;
 import net.sitemorph.protostore.helper.CollectionIterator;
 import net.sitemorph.protostore.helper.FilteringDataIterator;
-
-import com.google.protobuf.Descriptors.Descriptor;
-import com.google.protobuf.Descriptors.FieldDescriptor;
-import com.google.protobuf.Descriptors.FieldDescriptor.Type;
-import com.google.protobuf.Message;
+import net.sitemorph.protostore.helper.StreamAdapter;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -20,6 +21,7 @@ import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 /**
  * This store is simply intended to be used as an in memory cache or
@@ -49,7 +51,7 @@ import java.util.UUID;
  *
  * @author damien@sitemorph.net
  */
-public class InMemoryStore<T extends Message> implements CrudStore<T> {
+public class InMemoryStore<T extends Message> implements CrudStore<T>, CrudStream<T> {
 
   private static final long INITIAL_VECTOR = 0;
   private FieldDescriptor urnField;
@@ -203,6 +205,11 @@ public class InMemoryStore<T extends Message> implements CrudStore<T> {
   public static void setInitialVector(Message.Builder builder,
       FieldDescriptor vectorField) {
     builder.setField(vectorField, INITIAL_VECTOR);
+  }
+
+  @Override
+  public Stream<T> stream(Message.Builder builder) {
+    return new StreamAdapter(this.read(builder));
   }
 
   public static class  Builder<M extends Message> {
