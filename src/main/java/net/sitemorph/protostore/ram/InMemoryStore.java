@@ -13,15 +13,19 @@ import net.sitemorph.protostore.MessageVectorException;
 import net.sitemorph.protostore.SortOrder;
 import net.sitemorph.protostore.helper.CollectionIterator;
 import net.sitemorph.protostore.helper.FilteringDataIterator;
-import net.sitemorph.protostore.helper.StreamAdapter;
+import net.sitemorph.protostore.helper.IteratorAdaptor;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.UUID;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+
 
 /**
  * This store is simply intended to be used as an in memory cache or
@@ -209,7 +213,7 @@ public class InMemoryStore<T extends Message> implements CrudStore<T>, CrudStrea
 
   @Override
   public Stream<T> stream(Message.Builder builder) {
-    return new StreamAdapter(this.read(builder));
+    return StreamSupport.stream(Spliterators.spliterator(new IteratorAdaptor<T>(this.read(builder)))); 
   }
 
   public static class  Builder<M extends Message> {
