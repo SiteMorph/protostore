@@ -1,12 +1,11 @@
 package net.sitemorph.protostore.helper;
 
+import com.google.protobuf.Descriptors.FieldDescriptor;
+import com.google.protobuf.Message;
 import net.sitemorph.protostore.CrudException;
 import net.sitemorph.protostore.CrudIterator;
 import net.sitemorph.protostore.CrudStore;
 import net.sitemorph.protostore.MessageNotFoundException;
-
-import com.google.protobuf.Descriptors.FieldDescriptor;
-import com.google.protobuf.Message;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Stream;
 
 /**
  * Pre-loading cached crud store which loads all elements into memory on build.
@@ -32,6 +32,16 @@ public class PreloadUrnCrudStore<T extends Message> implements CrudStore<T> {
   private FieldDescriptor urnDescriptor;
 
   private PreloadUrnCrudStore() {}
+
+  @Override
+  public boolean supportsStreams() {
+    return false;
+  }
+
+  @Override
+  public Stream<T> stream(Message.Builder builder) {
+    throw new UnsupportedOperationException();
+  }
 
   public static class Builder<M extends Message> {
 
@@ -132,7 +142,7 @@ public class PreloadUrnCrudStore<T extends Message> implements CrudStore<T> {
     CrudIterator<T> items = read(prototype);
     if (!items.hasNext()) {
       items.close();
-      throw new MessageNotFoundException("Resource not found for: " + prototype.toString());
+      throw new MessageNotFoundException("Resource not found for: " + prototype);
     }
     T result = items.next();
     items.close();

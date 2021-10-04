@@ -7,7 +7,6 @@ import com.google.protobuf.Message;
 import net.sitemorph.protostore.CrudException;
 import net.sitemorph.protostore.CrudIterator;
 import net.sitemorph.protostore.CrudStore;
-import net.sitemorph.protostore.CrudStream;
 import net.sitemorph.protostore.MessageNotFoundException;
 import net.sitemorph.protostore.MessageVectorException;
 import net.sitemorph.protostore.SortOrder;
@@ -55,7 +54,7 @@ import java.util.stream.StreamSupport;
  *
  * @author damien@sitemorph.net
  */
-public class InMemoryStore<T extends Message> implements CrudStore<T>, CrudStream<T> {
+public class InMemoryStore<T extends Message> implements CrudStore<T> {
 
   private static final long INITIAL_VECTOR = 0;
   private FieldDescriptor urnField;
@@ -68,7 +67,7 @@ public class InMemoryStore<T extends Message> implements CrudStore<T>, CrudStrea
   private InMemoryStore() {}
 
   @Override
-  public synchronized T create(Message.Builder builder) throws CrudException {
+  public synchronized T create(T.Builder builder) throws CrudException {
 
     // find a urn for the new object
     UUID urn = UUID.randomUUID();
@@ -83,11 +82,11 @@ public class InMemoryStore<T extends Message> implements CrudStore<T>, CrudStrea
     if (null != vectorField) {
       setInitialVector(builder, vectorField);
     }
-
+    @SuppressWarnings("unchecked")
     T newValue = (T) builder.build();
     int insertAt;
     if (null != sortField) {
-      insertAt = Collections.binarySearch(data, newValue, new InMemoryComparator<T>(sortField, direction));
+      insertAt = Collections.binarySearch(data, newValue, new InMemoryComparator<>(sortField, direction));
 
       if (0 > insertAt) {
         // if not exactly found then will be inserted.
@@ -126,7 +125,7 @@ public class InMemoryStore<T extends Message> implements CrudStore<T>, CrudStrea
     CrudIterator<T> items = read(prototype);
     if (!items.hasNext()) {
       items.close();
-      throw new MessageNotFoundException("Message not found: " + prototype.toString());
+      throw new MessageNotFoundException("Message not found: " + prototype);
     }
     T result = items.next();
     items.close();
@@ -157,7 +156,7 @@ public class InMemoryStore<T extends Message> implements CrudStore<T>, CrudStrea
         T result = (T) builder.build();
         data.set(i, result);
         // sort the data in case the update order changed
-        Collections.sort(data, new InMemoryComparator<T>(sortField, direction));
+        data.sort(new InMemoryComparator<>(sortField, direction));
         return result;
       }
     }
@@ -212,8 +211,19 @@ public class InMemoryStore<T extends Message> implements CrudStore<T>, CrudStrea
   }
 
   @Override
-  public Stream<T> stream(Message.Builder builder) {
-    return StreamSupport.stream(Spliterators.spliterator(new IteratorAdaptor<T>(this.read(builder)))); 
+  public Stream<T> stream(T.Builder builder) {
+    IteratorAdaptor<T> adapter = new IteratorAdaptor<>(this.read(builder));
+    int characteristics = Spliterator.CONCURRENT | Spliterator.NONNULL;
+    if (null != sortField) {
+      characteristics |= Spliterator.ORDERED;
+    }
+    Spliterator<T> spliterator = Spliterators.spliteratorUnknownSize(adapter, characteristics);
+    return StreamSupport.stream(spliterator, false);
+  }
+
+  @Override
+  public boolean supportsStreams() {
+    return true;
   }
 
   public static class  Builder<M extends Message> {
@@ -354,10 +364,10 @@ public class InMemoryStore<T extends Message> implements CrudStore<T>, CrudStrea
               sortField.getName());
         }
         if (SortOrder.ASCENDING == direction) {
-          //noinspection unchecked
+          //noinspection rawtypes,
           return ((Comparable) leftValue).compareTo(rightValue);
         } else {
-          //noinspection unchecked
+          //noinspection rawtypes
           return ((Comparable) rightValue).compareTo(leftValue);
         }
       }

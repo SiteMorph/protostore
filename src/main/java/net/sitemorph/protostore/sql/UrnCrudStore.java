@@ -1,5 +1,8 @@
 package net.sitemorph.protostore.sql;
 
+import com.google.protobuf.Descriptors.Descriptor;
+import com.google.protobuf.Descriptors.FieldDescriptor;
+import com.google.protobuf.Message;
 import net.sitemorph.protostore.CrudException;
 import net.sitemorph.protostore.CrudIterator;
 import net.sitemorph.protostore.CrudStore;
@@ -7,10 +10,6 @@ import net.sitemorph.protostore.MessageNotFoundException;
 import net.sitemorph.protostore.MessageVectorException;
 import net.sitemorph.protostore.SortOrder;
 import net.sitemorph.protostore.ram.InMemoryStore;
-
-import com.google.protobuf.Descriptors.Descriptor;
-import com.google.protobuf.Descriptors.FieldDescriptor;
-import com.google.protobuf.Message;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -21,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static net.sitemorph.protostore.sql.AutoIdCrudStore.setStatementValue;
 
@@ -130,7 +130,7 @@ public class UrnCrudStore<T extends Message> implements CrudStore<T> {
     CrudIterator<T> items = read(prototype);
     if (!items.hasNext()) {
       items.close();
-      throw new MessageNotFoundException("Message not found: " + prototype.toString());
+      throw new MessageNotFoundException("Message not found: " + prototype);
     }
     T result = items.next();
     items.close();
@@ -220,6 +220,16 @@ public class UrnCrudStore<T extends Message> implements CrudStore<T> {
     } catch (SQLException e) {
       throw new CrudException("Error closing Db Urn Field Store", e);
     }
+  }
+
+  @Override
+  public boolean supportsStreams() {
+    return false;
+  }
+
+  @Override
+  public Stream<T> stream(Message.Builder builder) {
+    throw new UnsupportedOperationException();
   }
 
   public static class Builder<F extends Message> {
@@ -383,7 +393,7 @@ public class UrnCrudStore<T extends Message> implements CrudStore<T> {
               .append(", ");
         }
         throw new CrudException("Error locating urn field by name " + urnField +
-            " in field list " + fields.toString());
+            " in field list " + fields);
       }
       return this;
     }

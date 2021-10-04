@@ -1,18 +1,17 @@
 package net.sitemorph.protostore.sql;
 
-import net.sitemorph.protostore.CrudException;
-import net.sitemorph.protostore.CrudIterator;
-import net.sitemorph.protostore.CrudStore;
-import net.sitemorph.protostore.ram.InMemoryStore;
-import net.sitemorph.protostore.MessageNotFoundException;
-import net.sitemorph.protostore.MessageVectorException;
-import net.sitemorph.protostore.SortOrder;
-
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Message;
+import net.sitemorph.protostore.CrudException;
+import net.sitemorph.protostore.CrudIterator;
+import net.sitemorph.protostore.CrudStore;
+import net.sitemorph.protostore.MessageNotFoundException;
+import net.sitemorph.protostore.MessageVectorException;
+import net.sitemorph.protostore.SortOrder;
+import net.sitemorph.protostore.ram.InMemoryStore;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -24,6 +23,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 
 /**
  * Legacy database protobuf mapping storage engine which supports Auto ID
@@ -46,6 +46,16 @@ public class AutoIdCrudStore<T extends Message> implements CrudStore<T> {
   private ColumnType idType;
   private Map<FieldDescriptor, PreparedStatement> readIndexes;
   private FieldDescriptor vectorField;
+
+  @Override
+  public boolean supportsStreams() {
+    return false;
+  }
+
+  @Override
+  public Stream<T> stream(Message.Builder builder) {
+    throw new UnsupportedOperationException();
+  }
 
   /**
    * Enum used for auto ID generation type casting.
@@ -155,7 +165,7 @@ public class AutoIdCrudStore<T extends Message> implements CrudStore<T> {
     CrudIterator<T> items = read(prototype);
     if (!items.hasNext()) {
       items.close();
-      throw new MessageNotFoundException("Message not found: " + prototype.toString());
+      throw new MessageNotFoundException("Message not found: " + prototype);
     }
     T result = items.next();
     items.close();
@@ -418,7 +428,7 @@ public class AutoIdCrudStore<T extends Message> implements CrudStore<T> {
    * @param fields list
    * @param match field or null if match all
    * @return prepared statement
-   * @throws SQLException
+   * @throws SQLException on underlying SQL exception
    */
   public static PreparedStatement getStatement(Connection connection,
       String tableName, List<FieldDescriptor> fields, FieldDescriptor match,

@@ -50,7 +50,6 @@ public class InMemoryStoreTest {
     assertEquals(count, 2, "Expected just two task with zero default field");
   }
 
-
   @Test
   public void testSecondaryIndex() throws CrudException {
     CrudStore<Task> store = buildStore();
@@ -107,6 +106,18 @@ public class InMemoryStoreTest {
         .getRunTime()), expect);
     }
     assertFalse(tasks.hasNext());
+  }
+
+  @Test
+  public void testStreamItems() throws CrudException {
+    CrudStore<Task> store = buildStore();
+    store.create(Task.newBuilder().setPath(TEST_PATH).setRunTime(0));
+    store.create(Task.newBuilder().setPath(TEST_PATH).setRunTime(0));
+    store.create(Task.newBuilder().setPath(TEST_PATH).setRunTime(0));
+
+    long count = store.stream(Task.newBuilder())
+        .count();
+    assertEquals(count, 3);
   }
 
   private CrudStore<Task> buildStore() {

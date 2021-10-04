@@ -16,7 +16,7 @@ import java.io.Closeable;
  *
  * @author dak
  */
-public interface CrudStore<T extends Message> extends Closeable {
+public interface CrudStore<T extends Message> extends Closeable, CrudStream<T> {
 
   /**
    * Create a representation from a builder using the underlying store.
@@ -24,7 +24,7 @@ public interface CrudStore<T extends Message> extends Closeable {
    * @param builder to construct a message from using the underlying store.
    * @return a constructed object
    */
-  public T create(T.Builder builder) throws CrudException;
+  T create(T.Builder builder) throws CrudException;
 
   /**
    * Read a representation based on the fields set in the prototype. The returned
@@ -37,7 +37,7 @@ public interface CrudStore<T extends Message> extends Closeable {
    * @param prototype for the selection of messages
    * @return iterator over representation messages.
    */
-  public CrudIterator<T> read(T.Builder prototype) throws CrudException;
+  CrudIterator<T> read(T.Builder prototype) throws CrudException;
 
   /**
    * Read a single message based on a prototype of the message. This method is a
@@ -48,7 +48,7 @@ public interface CrudStore<T extends Message> extends Closeable {
    * @return matching message
    * @throws MessageNotFoundException if no matching record is in the store.
    */
-  public T readOne(T.Builder prototype) throws CrudException;
+  T readOne(T.Builder prototype) throws CrudException;
 
   /**
    * Update a representation given a builder update. This method relies on
@@ -57,7 +57,7 @@ public interface CrudStore<T extends Message> extends Closeable {
    * @param builder with updates applied.
    * @return The updated representation.
    */
-  public T update(T.Builder builder) throws CrudException;
+  T update(T.Builder builder) throws CrudException;
 
   /**
    * Delete a representation. The identifier is dependent on the underlying
@@ -65,7 +65,7 @@ public interface CrudStore<T extends Message> extends Closeable {
    *
    * @param message to update
    */
-  public void delete(T message) throws CrudException;
+  void delete(T message) throws CrudException;
 
 
   /**
@@ -74,5 +74,5 @@ public interface CrudStore<T extends Message> extends Closeable {
    * @throws CrudException when there is an underlying storage exception.
    */
   @Override
-  public void close() throws CrudException;
+  void close() throws CrudException;
 }
