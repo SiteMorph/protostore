@@ -27,32 +27,22 @@ import java.util.stream.StreamSupport;
 
 
 /**
- * This store is simply intended to be used as an in memory cache or
- * buffer rather than a persisted store. This means that you must set all
- * required fields for the builder before it is passed.
+ * In memory reference implementation of the Protostore CRUD interface with
+ * support for:
+ * * UUID class 4 random unique resource identifier allocation on create
+ * * Multiple index field iteration
+ * * Sort order traversal
+ * * Vector clock check then set locking semantics for message updates
  *
- * As with the other database backed storage the in memory store does support
- * read with fields set.
+ * The in memory (RAM) store uses a sorted storage list to achieve balanced
+ * performance with operations currently around:
  *
- * The store supports filtering by urn or index field. Note that these
- * operations are O(N) as they iterate over the full data set. The store
- * supports a single order by field as well as named secondary indexes. Results
- * are stored in the sort order specified so will be returned in that order
- * whenever iterated over.
+ * Create: T(N + log(N))
+ * Read: T(N)
+ * Update: T(N/2)
+ * Delete T(N/2)
  *
- * Note that it is assumed that the urn field is a UUID string and will be set
- * as such when create is called, checking for uniqueness.
- *
- * If set up when creating the store support for vector clocks is also provided.
- * This is achieved by the use of 'reads' having a hinted vector clock field
- * which must store a signed long value which is used to signal updates to the
- * store. Vector values should not be set but will be required on update. This
- * means that a read / update can be checked to ensure that writes to a message
- * store are reflective of updates made. If two readers read concurrently one
- * will succeed in the write then the other, the second will throw an update
- * vector error due to clock skew.
- *
- * @author damien@sitemorph.net
+ * @author hello@damienallison.com
  */
 public class InMemoryStore<T extends Message> implements CrudStore<T> {
 
